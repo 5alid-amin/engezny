@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+* {
+  font-family: 'MyCustomFont', sans-serif !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+button,
+a,
+[role="button"],
+select,
+input,
+textarea {
+  cursor: pointer !important;
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 165, 147, 0.6); /* Brand teal */
+}
+
+@font-face {
+  font-family: 'MyCustomFont';
+  /* تأكد من وجود النقطة قبل assets لو index.css في نفس مستوى فولدر assets */
+  src: url('/fonts/TheYearofHandicrafts-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  --color-brand-teal: #34A593;
+  --color-brand-dark: #003B46;
+  --color-brand-bg: #003B46;
+  --color-brand-surface: rgba(255, 255, 255, 0.04);
+  --color-brand-surface-hover: rgba(255, 255, 255, 0.08);
+  --color-brand-gray: #A0B3C6;
+}
+
+/* Custom background subtle glows */
+.bg-glow-wrapper {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.bg-glow-1 {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(230, 245, 243, 0.8) 0%, rgba(246, 250, 250, 0) 70%);
+  z-index: 0;
+}
+
+.bg-glow-2 {
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(220, 240, 238, 0.6) 0%, rgba(246, 250, 250, 0) 70%);
+  z-index: 0;
+}
+
+/* To ensure content is above the glows */
+.content-wrapper {
+  position: relative;
+  z-index: 10;
+}
