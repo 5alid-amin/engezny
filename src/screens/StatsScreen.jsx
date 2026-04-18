@@ -1,190 +1,203 @@
 import React from 'react';
 import { Calendar, Award, Zap, CheckCircle2, Timer as TimerIcon, ChevronDown } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+
+// بيانات وهمية للجدول لتبدو حقيقية
+const data = [
+  { name: 'الجمعة', hours: 4 },
+  { name: 'الخميس', hours: 3.5 },
+  { name: 'الأربعاء', hours: 8.5 },
+  { name: 'الثلاثاء', hours: 5 },
+  { name: 'الإثنين', hours: 9 },
+  { name: 'الأحد', hours: 7 },
+  { name: 'السبت', hours: 7.5 },
+].reverse();
 
 const StatsScreen = () => {
+  const productivityStatus = "مثمر جداً"; // متغير الحالة
+
   return (
-    <div className="flex flex-col flex-1 h-full relative p-4 sm:p-8">
-      
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        
-        {/* Left Header (Dates & Avatar) */}
-        <div className="flex items-center gap-6">
-          <div className="w-14 h-14 rounded-full bg-white/5 border border-brand-teal/30 overflow-hidden shadow-[0_5px_15px_rgba(52,165,147,0.2)]">
-             {/* Avatar Image Placeholder */}
-             <div className="w-full h-full flex items-center justify-center text-brand-teal text-sm">أ.س</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md px-6 py-3 rounded-full shadow-inner flex items-center gap-3 border border-white/10">
-            <span className="text-base tracking-wide text-white">12 أكتوبر - 18 أكتوبر</span>
-            <Calendar size={20} className="text-brand-teal" />
-          </div>
-        </div>
+    <div className="flex flex-col flex-1 h-full relative p-4 sm:p-8 bg-[#022c35] font-sans" dir="rtl">
 
-        {/* Right Header (Title) */}
+      {/* Header - Simplified */}
+      <div className="flex justify-between items-center mb-10">
         <div className="text-right">
-          <p className="text-base text-brand-gray mb-2 tracking-wide">نظرة عامة على أدائك</p>
-          <h2 className="text-4xl text-white tracking-wide">إحصائيات الإنجاز</h2>
+          <p className="text-brand-gray opacity-60 mb-1 text-sm tracking-wide">نظرة عامة على أدائك</p>
+          <h2 className="text-4xl font-bold text-white tracking-tight">إحصائيات الإنجاز</h2>
         </div>
 
+        <div className="bg-white/5 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3 shadow-xl">
+          <Calendar size={18} className="text-brand-teal" />
+          <span className="text-sm font-medium text-white/90">هذا الأسبوع</span>
+          <ChevronDown size={16} className="text-white/40" />
+        </div>
       </div>
 
       {/* Main Grid */}
       <div className="flex flex-col-reverse lg:flex-row gap-8 flex-1">
-        
-        {/* Left Column (Sidebar-like Stats) */}
-        <div className="w-full lg:w-[300px] flex flex-col gap-6">
-          
+
+        {/* Left Column (Sidebar) */}
+        <div className="w-full lg:w-[320px] flex flex-col gap-6">
+
           {/* Deep Work Distribution */}
-          <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/10">
-            <h3 className="text-xl text-white text-right mb-8 tracking-wide">توزيع العمل العميق</h3>
-            
-            <div className="flex flex-col gap-6">
-              <DistributionRow label="تطوير البرمجيات" percentage="42%" color="bg-brand-teal" width="w-[42%]" />
-              <DistributionRow label="التخطيط الاستراتيجي" percentage="28%" color="bg-white/60" width="w-[28%]" />
-              <DistributionRow label="إدارة المحتوى" percentage="15%" color="bg-white/30" width="w-[15%]" />
+          <div className="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-10 -left-10 w-32 h-32 bg-brand-teal/5 rounded-full blur-3xl"></div>
+            <h3 className="text-xl font-semibold text-white text-right mb-8 tracking-wide">توزيع العمل العميق</h3>
+
+            <div className="flex flex-col gap-6 relative z-10">
+              <DistributionRow label="تطوير البرمجيات" percentage="42%" color="#34A593" width="42%" />
+              <DistributionRow label="التخطيط الاستراتيجي" percentage="28%" color="#ffffff99" width="28%" />
+              <DistributionRow label="إدارة المحتوى" percentage="15%" color="#ffffff44" width="15%" />
             </div>
 
-            <div className="mt-10 pt-8 border-t border-white/10 text-center">
-              <p className="text-sm text-brand-gray mb-2 tracking-wide">إجمالي ساعات التركيز</p>
-              <p className="text-5xl font-light text-brand-teal mb-2 drop-shadow-[0_0_15px_rgba(52,165,147,0.3)]">32.5</p>
-              <p className="text-xs text-brand-gray tracking-wide">ساعة هذا الأسبوع</p>
+            <div className="mt-10 pt-8 border-t border-white/5 text-center">
+              <p className="text-xs text-brand-gray opacity-60 mb-2 uppercase tracking-widest">إجمالي ساعات التركيز</p>
+              <p className="text-5xl font-light text-brand-teal drop-shadow-[0_0_20px_rgba(52,165,147,0.4)]">32.5</p>
+              <p className="text-[10px] text-brand-gray mt-2 opacity-50">ساعة هذا الأسبوع</p>
             </div>
           </div>
 
           {/* Achievement Card */}
-          <div className="bg-gradient-to-br from-[#074C5B] to-[#003B46] rounded-[2.5rem] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.4)] border border-brand-teal/20 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-teal/10 rounded-full blur-2xl"></div>
-            <div className="inline-block bg-brand-teal/20 border border-brand-teal/30 px-4 py-1.5 rounded-full text-xs tracking-wider mb-6 relative z-10 text-brand-teal">
+          <div className="bg-gradient-to-br from-[#074C5B] to-[#002229] rounded-[2.5rem] p-8 shadow-2xl border border-white/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-brand-teal/20 rounded-full blur-[60px] group-hover:bg-brand-teal/30 transition-all"></div>
+
+            <div className="inline-block bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest mb-6 text-brand-teal uppercase">
               إنجازات مميزة
             </div>
-            <h3 className="text-3xl mb-3 tracking-wide relative z-10">أسبوع مثمر جداً!</h3>
-            <p className="text-base text-white/70 mb-8 leading-relaxed relative z-10">
-              لقد أكملت 24 مهمة عالية الأولوية، وهو رقم قياسي جديد لهذا الشهر.
+
+            <h3 className="text-3xl font-bold text-white mb-3 tracking-wide">أسبوع {productivityStatus}!</h3>
+            <p className="text-sm text-white/60 mb-8 leading-relaxed">
+              لقد أكملت 24 مهمة عالية الأولوية، وهو رقم قياسي جديد لهذا الأسبوع.
             </p>
 
-            <div className="flex flex-col gap-4 relative z-10">
+            <div className="flex flex-col gap-4">
               <AchievementRow icon={<Award size={20} />} title="وسام المثابرة" subtitle="5 أيام عمل عميق متتالية" />
-              <AchievementRow icon={<Zap size={20} />} title="نمو الإنتاجية" subtitle="+18% مقارنة بالشهر السابق" />
+              <AchievementRow icon={<Zap size={20} />} title="نمو الإنتاجية" subtitle="+18% مقارنة بالأسبوع السابق" />
             </div>
           </div>
-
         </div>
 
-        {/* Right Column (Charts & Summary) */}
+        {/* Right Column (The Professional Chart) */}
         <div className="flex-1 flex flex-col gap-6">
-          
-          {/* Chart Card */}
-          <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/10 flex-1 flex flex-col">
-            <div className="flex justify-between items-start mb-10">
-              <button className="bg-white/5 border border-white/10 hover:bg-white/10 px-5 py-2.5 rounded-full flex items-center gap-3 text-base text-white transition-colors">
-                <ChevronDown size={20} className="text-brand-gray" />
-                <span>هذا الأسبوع</span>
-              </button>
+
+          <div className="bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/10 shadow-2xl flex-1 flex flex-col relative overflow-hidden">
+            {/* The Grid Overlay */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+              style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, size: '40px 40px' }}>
+            </div>
+
+            <div className="flex justify-between items-start mb-12 relative z-10">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-brand-teal shadow-[0_0_10px_#34A593]"></div>
+                <div className="w-3 h-3 rounded-full bg-white/10"></div>
+              </div>
               <div className="text-right">
-                <h3 className="text-2xl text-white mb-2 tracking-wide">تحليل التدفق الأسبوعي</h3>
-                <p className="text-sm text-brand-gray tracking-wide">ساعات التركيز العميق مقابل المهام المكتملة</p>
+                <h3 className="text-2xl font-bold text-white mb-1">تحليل التدفق الأسبوعي</h3>
+                <p className="text-sm text-white/40">قياس ساعات التركيز العميق اليومية</p>
               </div>
             </div>
 
-            {/* Placeholder for Chart */}
-            <div className="flex-1 relative min-h-[280px] w-full flex items-end justify-between px-4 pb-10">
-              {/* Fake Chart Lines */}
-              <div className="absolute inset-0 flex flex-col justify-between pb-10 z-0">
-                <div className="w-full h-[1px] bg-white/5"></div>
-                <div className="w-full h-[1px] bg-white/5"></div>
-                <div className="w-full h-[1px] bg-white/5"></div>
-                <div className="w-full h-[1px] bg-white/5"></div>
-              </div>
-              
-              {/* Fake Graph SVG */}
-              <div className="absolute inset-0 z-10 flex items-center justify-center opacity-80 pointer-events-none">
-                 <svg viewBox="0 0 500 150" className="w-full h-full preserve-3d" preserveAspectRatio="none">
-                   <path d="M0,100 L70,80 L140,90 L210,40 L280,60 L350,10 L420,30 L500,20 L500,150 L0,150 Z" fill="rgba(52, 165, 147, 0.1)" />
-                   <path d="M0,100 L70,80 L140,90 L210,40 L280,60 L350,10 L420,30 L500,20" fill="none" stroke="#34A593" strokeWidth="3" />
-                   {/* Data Points */}
-                   <circle cx="210" cy="40" r="4" fill="#34A593" />
-                   <circle cx="350" cy="10" r="4" fill="#34A593" />
-                 </svg>
-              </div>
-
-              {/* Tooltip Placeholder */}
-              <div className="absolute top-[20%] left-[45%] bg-[#074C5B] border border-brand-teal/30 text-white text-sm p-3 rounded-xl z-20 shadow-[0_10px_25px_rgba(0,0,0,0.3)] text-center transform -translate-x-1/2 -translate-y-full backdrop-blur-md">
-                <p className="mb-1 tracking-wide">الأربعاء</p>
-                <p className="text-brand-teal tracking-wide">8.5 ساعات</p>
-              </div>
-
-              {/* X Axis Labels */}
-              <div className="absolute bottom-0 w-full flex justify-between text-sm text-brand-gray px-4 tracking-wide">
-                <span>السبت</span>
-                <span>الأحد</span>
-                <span>الإثنين</span>
-                <span>الثلاثاء</span>
-                <span>الأربعاء</span>
-                <span>الخميس</span>
-                <span>الجمعة</span>
-              </div>
+            {/* Main Chart Container */}
+            <div className="flex-1 w-full min-h-[350px] relative z-10">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data}>
+                  <defs>
+                    <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#34A593" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#34A593" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
+                    dy={20}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#074C5B', borderRadius: '15px', border: '1px solid rgba(52,165,147,0.4)', textAlign: 'right' }}
+                    itemStyle={{ color: '#34A593' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="hours"
+                    stroke="#34A593"
+                    strokeWidth={4}
+                    fillOpacity={1}
+                    fill="url(#colorHours)"
+                    dot={{ r: 6, fill: '#34A593', strokeWidth: 2, stroke: '#022c35' }}
+                    activeDot={{ r: 8, strokeWidth: 0 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Summary Cards */}
+          {/* Bottom Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
-            <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/10 flex items-center justify-between">
-              <div className="w-16 h-16 rounded-[1.5rem] bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal shadow-inner">
-                <CheckCircle2 size={28} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-brand-gray mb-2 tracking-wide">معدل الإنجاز</p>
-                <p className="text-4xl text-white mb-2 tracking-wide drop-shadow-md">94%</p>
-                <p className="text-xs text-brand-teal flex items-center gap-1.5 justify-end tracking-wider">
-                  <CheckCircle2 size={12} />
-                  <span>أعلى من المتوسط بـ 5%</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/10 flex items-center justify-between">
-              <div className="w-16 h-16 rounded-[1.5rem] bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal shadow-inner">
-                <TimerIcon size={28} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-brand-gray mb-2 tracking-wide">متوسط التركيز</p>
-                <p className="text-4xl text-white mb-2 tracking-wide drop-shadow-md">5<span className="text-2xl">س</span> 42<span className="text-2xl">د</span></p>
-                <p className="text-xs text-brand-teal tracking-wider">
-                  12% زيادة عن الأسبوع الماضي
-                </p>
-              </div>
-            </div>
-
+            <SummaryCard
+              icon={<CheckCircle2 size={26} />}
+              label="معدل الإنجاز"
+              value="94%"
+              subValue="أعلى من المتوسط بـ 5%"
+              isPositive={true}
+            />
+            <SummaryCard
+              icon={<TimerIcon size={26} />}
+              label="متوسط التركيز"
+              value={<>5<span className="text-xl mx-1 opacity-50">س</span> 42<span className="text-xl mx-1 opacity-50">د</span></>}
+              subValue="12% زيادة عن الأسبوع الماضي"
+              isPositive={true}
+            />
           </div>
 
         </div>
-
       </div>
     </div>
   );
 };
 
+// Sub-components for cleaner code
 const DistributionRow = ({ label, percentage, color, width }) => (
   <div className="flex flex-col gap-3">
-    <div className="flex justify-between items-center text-sm text-white tracking-wide">
+    <div className="flex justify-between items-center text-[13px] font-medium text-white/80">
       <span>{percentage}</span>
       <span>{label}</span>
     </div>
-    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden flex justify-end shadow-inner">
-      <div className={`h-full rounded-full ${color} ${width} shadow-[0_0_10px_currentColor]`}></div>
+    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+      <div
+        className="h-full rounded-full transition-all duration-1000"
+        style={{ width: width, backgroundColor: color, boxShadow: `0 0 15px ${color}66` }}
+      ></div>
     </div>
   </div>
 );
 
 const AchievementRow = ({ icon, title, subtitle }) => (
-  <div className="bg-white/5 p-4 rounded-3xl flex items-center justify-between gap-5 border border-white/10 hover:bg-white/10 transition-colors">
-    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-brand-teal shadow-inner border border-white/5">
+  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl flex items-center justify-between border border-white/5 hover:bg-white/10 transition-all cursor-default group">
+    <div className="w-11 h-11 rounded-xl bg-brand-teal/10 flex items-center justify-center text-brand-teal group-hover:scale-110 transition-transform">
       {icon}
     </div>
-    <div className="text-right flex-1">
-      <h4 className="text-lg mb-1 tracking-wide">{title}</h4>
-      <p className="text-xs text-white/60 tracking-wider">{subtitle}</p>
+    <div className="text-right flex-1 pr-4">
+      <h4 className="text-sm font-bold text-white/90">{title}</h4>
+      <p className="text-[11px] text-white/40 font-medium">{subtitle}</p>
+    </div>
+  </div>
+);
+
+const SummaryCard = ({ icon, label, value, subValue, isPositive }) => (
+  <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 flex items-center justify-between hover:border-brand-teal/30 transition-all shadow-xl">
+    <div className="w-16 h-16 rounded-2xl bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center text-brand-teal shadow-inner">
+      {icon}
+    </div>
+    <div className="text-right">
+      <p className="text-xs font-bold text-white/30 mb-2 uppercase tracking-widest">{label}</p>
+      <p className="text-4xl font-bold text-white mb-2">{value}</p>
+      <p className={`text-[10px] font-bold ${isPositive ? 'text-brand-teal' : 'text-red-400'} flex items-center gap-1 justify-end`}>
+        {isPositive && <CheckCircle2 size={10} />}
+        {subValue}
+      </p>
     </div>
   </div>
 );

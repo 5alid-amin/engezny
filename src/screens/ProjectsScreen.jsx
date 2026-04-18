@@ -1,111 +1,188 @@
-import React from 'react';
-import { Search, Bell, Settings, Palette, Code, BarChart2, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Pencil,
+  Trash2,
+  Check,
+  Plus,
+  X
+} from 'lucide-react';
 
-const categories = [
-  {
-    id: '01',
-    title: 'تصميم',
-    icon: <Palette size={32} />,
-    color: 'bg-brand-teal',
-    textColor: 'text-white'
-  },
-  {
-    id: '02',
-    title: 'تطوير',
-    icon: <Code size={34} />,
-    color: 'bg-[#074C5B]',
-    textColor: 'text-white'
-  },
-  {
-    id: '03',
-    title: 'إدارة',
-    icon: <BarChart2 size={32} />,
-    color: 'bg-[#8C9896]',
-    textColor: 'text-white'
-  },
-  {
-    id: '04',
-    title: 'إبداع',
-    icon: <Sparkles size={34} />,
-    color: 'bg-white',
-    textColor: 'text-brand-dark',
-    border: 'shadow-[0_0_20px_rgba(255,255,255,0.3)]'
-  }
+const initialCategories = [
+  { id: 1, title: 'تصميم', icon: '🎨', color: 'bg-brand-teal' },
+  { id: 2, title: 'تطوير', icon: '💻', color: 'bg-blue-500' },
+  { id: 3, title: 'إدارة', icon: '💼', color: 'bg-purple-500' },
+  { id: 4, title: 'إبداع', icon: '✨', color: 'bg-orange-500' },
 ];
 
-const ProjectsScreen = () => {
+const CategoriesScreen = () => {
+  const [categories, setCategories] = useState(initialCategories);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(null);
+
+  // Modal States
+  const [formData, setFormData] = useState({ title: '', icon: '', useCustomIcon: false });
+
+  const handleOpenModal = (cat = null) => {
+    if (cat) {
+      setIsEditing(cat.id);
+      setFormData({
+        title: cat.title,
+        icon: cat.icon,
+        useCustomIcon: true
+      });
+    } else {
+      setIsEditing(null);
+      setFormData({ title: '', icon: '', useCustomIcon: false });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    setCategories(categories.filter(c => c.id !== id));
+  };
+
+  const handleSave = () => {
+    if (!formData.title) return;
+
+    const finalIcon = formData.useCustomIcon && formData.icon
+      ? formData.icon
+      : formData.title.charAt(0).toUpperCase();
+
+    if (isEditing) {
+      setCategories(categories.map(c =>
+        c.id === isEditing ? { ...c, title: formData.title, icon: finalIcon } : c
+      ));
+    } else {
+      const newCat = {
+        id: Date.now(),
+        title: formData.title,
+        icon: finalIcon,
+        color: 'bg-brand-teal',
+      };
+      setCategories([...categories, newCat]);
+    }
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="flex flex-col flex-1 h-full relative p-4 sm:p-8">
+    <div className="flex flex-col flex-1 h-full relative p-8">
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-16">
-
-        {/* Left (Avatar & Notifications) */}
-        <div className="flex items-center gap-8">
-          <div className="w-14 h-14 rounded-full bg-white/5 border border-brand-teal/30 overflow-hidden shadow-[0_5px_15px_rgba(52,165,147,0.2)]">
-            <div className="w-full h-full flex items-center justify-center text-brand-teal text-sm">أ.س</div>
-          </div>
-          <button className="text-white/70 hover:text-white transition-colors relative">
-            <Bell size={24} />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-400 rounded-full shadow-[0_0_10px_rgba(248,113,113,0.8)]"></span>
-          </button>
-        </div>
-
-        {/* Center (Search Bar) */}
-        <div className="flex-1 max-w-xl mx-12 relative">
-          <input
-            type="text"
-            placeholder="بحث عن الفئات..."
-            className="w-full bg-white/5 focus:bg-white/10 border border-white/10 focus:border-brand-teal/50 px-8 py-4 rounded-full text-right text-base text-white outline-none transition-all pr-14 placeholder-white/40 shadow-inner"
-          />
-          <Search size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40" />
-        </div>
-
-        {/* Right (Top right settings if needed, but we keep it empty or add logo) */}
-        <div className="w-12"></div>
+      {/* Header Section */}
+      <div className="flex flex-col items-center justify-center text-center mt-4 mb-12">
+        <h2 className="text-4xl text-white font-bold mb-3 tracking-tight">هنركز على إيه الفترة دي؟</h2>
+        <p className="text-brand-gray text-lg opacity-70">اختر الفئة التي تعبر عن مشروعك القادم</p>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col items-center mt-10">
-
-        <div className="text-center mb-20">
-          <h2 className="text-5xl text-white mb-6 tracking-wide">إكتشف مساحتـك</h2>
-          <p className="text-lg text-brand-gray tracking-wide">اختر الفئة التي تعبر عن مشروعك القادم. بيئة عمل صُممت لتعزيز التركيز والإبداع.</p>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-4xl">
-          {categories.map((cat) => (
-            <div
-              key={cat.id}
-              className={`relative bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 h-72 flex flex-col justify-between items-center group cursor-pointer hover:bg-white/10 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:border-brand-teal/30 transition-all duration-500 hover:-translate-y-2`}
-            >
-              <div className="w-full flex justify-between items-start">
-                <span className="text-sm tracking-[0.3em] text-brand-gray uppercase">
-                  CATEGORY / {cat.id}
-                </span>
-                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110 shadow-lg ${cat.color} ${cat.textColor} ${cat.border || ''}`}>
-                  {cat.icon}
-                </div>
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto w-full mb-24">
+        {categories.map((cat) => (
+          <div
+            key={cat.id}
+            className="group bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 border border-white/10 shadow-xl relative overflow-hidden transition-all duration-500 hover:bg-white/10 hover:-translate-y-2"
+          >
+            <div className="flex flex-row-reverse items-center justify-between relative z-10">
+              <div className={`w-20 h-20 rounded-3xl ${cat.color} flex items-center justify-center text-4xl shadow-lg shadow-black/20`}>
+                {cat.icon}
               </div>
-              <h3 className="text-5xl text-white self-end tracking-wide">{cat.title}</h3>
+
+              <div className="text-right">
+                <span className="text-xs tracking-[0.2em] text-brand-gray/50 uppercase block mb-2">CATEGORY / {cat.id}</span>
+                <h3 className="text-3xl text-white font-bold">{cat.title}</h3>
+              </div>
             </div>
-          ))}
-        </div>
 
-        {/* Bottom Helper */}
-        <div className="mt-24 bg-white/5 rounded-[2.5rem] p-10 max-w-3xl w-full text-center border border-white/10 backdrop-blur-xl shadow-2xl">
-          <h4 className="text-2xl text-white mb-4 tracking-wide">هل تحتاج لمساعدة في الاختيار؟</h4>
-          <p className="text-base text-brand-gray mb-8 tracking-wide">نظام الذكاء الاصطناعي في أنجزلي يمكنه توجيهك للفئة المناسبة بناءً على أهدافك.</p>
-          <button className="bg-brand-teal text-white px-8 py-4 rounded-full text-lg tracking-wide shadow-[0_10px_30px_rgba(52,165,147,0.3)] hover:shadow-[0_15px_40px_rgba(52,165,147,0.4)] hover:-translate-y-1 transition-all duration-300">
-            تحدث مع المساعد الرقمي
-          </button>
-        </div>
-
+            <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
+              <button
+                onClick={() => handleOpenModal(cat)}
+                className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-brand-teal hover:bg-white/10 transition-all"
+              >
+                <Pencil size={20} />
+              </button>
+              <button
+                onClick={() => handleDelete(cat.id)}
+                className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-red-400 hover:bg-white/10 transition-all"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Floating Action Button - Dynamic Positioning (على اليمين بجانب السايدبار) */}
+      <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none transition-all duration-500 ease-in-out">
+        <button
+          onClick={() => handleOpenModal()}
+          className="w-20 h-20 bg-brand-teal text-brand-dark rounded-full flex items-center justify-center shadow-[0_15px_40px_rgba(52,165,147,0.4)] transition-all duration-300 hover:scale-110 active:scale-95 pointer-events-auto"
+        >
+          <Plus size={35} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* Add/Edit Category Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-brand-dark/90 backdrop-blur-xl" onClick={() => setIsModalOpen(false)} />
+
+          <div className="bg-brand-surface border border-white/10 w-full max-w-lg rounded-[3.5rem] p-12 relative z-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 left-8 text-white/30 hover:text-white transition-colors">
+              <X size={32} />
+            </button>
+
+            <h2 className="text-3xl text-white text-right mb-10 font-bold">
+              {isEditing ? 'تعديل الفئة' : 'فئة جديدة'}
+            </h2>
+
+            <div className="flex flex-col gap-6 text-right">
+              <div>
+                <label className="text-brand-gray block mb-3 text-lg">اسم الفئة</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-xl text-white focus:outline-none focus:border-brand-teal/50 transition-all text-right"
+                  placeholder="مثلاً: تعلم، رياضة، عمل"
+                />
+              </div>
+
+              <div className="flex flex-col gap-4 py-4 border-y border-white/5">
+                <label className="flex items-center justify-end gap-3 cursor-pointer group">
+                  <span className="text-lg text-white/80 group-hover:text-brand-teal transition-colors">تخصيص أيقونة (Emoji)</span>
+                  <div
+                    onClick={() => setFormData({ ...formData, useCustomIcon: !formData.useCustomIcon })}
+                    className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${formData.useCustomIcon ? 'bg-brand-teal border-brand-teal' : 'border-white/20'}`}
+                  >
+                    {formData.useCustomIcon && <Check size={18} className="text-brand-dark" />}
+                  </div>
+                </label>
+
+                {formData.useCustomIcon && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <input
+                      type="text"
+                      maxLength="2"
+                      value={formData.icon}
+                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                      className="w-20 bg-white/5 border border-white/10 rounded-2xl p-4 text-3xl text-center focus:outline-none focus:border-brand-teal/50 transition-all mx-auto block"
+                      placeholder="😊"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleSave}
+                className="w-full bg-brand-teal text-brand-dark py-5 rounded-2xl text-xl font-bold mt-4 hover:shadow-[0_10px_30px_rgba(52,165,147,0.3)] active:scale-95 transition-all"
+              >
+                {isEditing ? 'حفظ التعديلات' : 'إضافة الفئة'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
 };
 
-export default ProjectsScreen;
+export default CategoriesScreen;

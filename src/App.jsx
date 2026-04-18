@@ -21,11 +21,6 @@ function App() {
       default:
         return (
           <div className="flex flex-col flex-1 h-full relative">
-            <div className="absolute top-0 left-0 z-20">
-              <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-[0_5px_20px_rgba(0,0,0,0.04)] hover:scale-105 hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-all text-brand-gray hover:text-brand-dark">
-                <Settings size={20} />
-              </button>
-            </div>
             <CountdownDisplay minutes="00" seconds="52" />
           </div>
         );
@@ -40,7 +35,7 @@ function App() {
 
       {/* Main Layout */}
       <div className="relative z-10 flex w-full h-screen">
-        
+
         {/* Sidebar */}
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 

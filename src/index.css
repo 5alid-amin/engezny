@@ -31,7 +31,8 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 165, 147, 0.6); /* Brand teal */
+  background: rgba(52, 165, 147, 0.6);
+  /* Brand teal */
 }
 
 @font-face {
