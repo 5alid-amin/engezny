@@ -4,10 +4,22 @@ import CountdownDisplay from './components/CountdownDisplay';
 import TasksScreen from './screens/TasksScreen';
 import StatsScreen from './screens/StatsScreen';
 import ProjectsScreen from './screens/ProjectsScreen';
+import AccountScreen from './screens/AccountScreen';
+import AuthScreen from './screens/AuthScreen';
 import { Settings } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('timer');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState('tasks');
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    setActiveTab('tasks');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -17,6 +29,8 @@ function App() {
         return <StatsScreen />;
       case 'projects':
         return <ProjectsScreen />;
+      case 'account':
+        return <AccountScreen onLogout={handleLogout} />;
       case 'timer':
       default:
         return (
@@ -26,6 +40,14 @@ function App() {
         );
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#003B46] text-white overflow-hidden tracking-wide text-lg">
+        <AuthScreen onLogin={handleLogin} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#003B46] text-white relative overflow-hidden tracking-wide text-lg" dir="rtl">

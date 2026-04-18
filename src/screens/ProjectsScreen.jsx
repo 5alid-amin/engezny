@@ -8,10 +8,10 @@ import {
 } from 'lucide-react';
 
 const initialCategories = [
-  { id: 1, title: 'تصميم', icon: '🎨', color: 'bg-brand-teal' },
-  { id: 2, title: 'تطوير', icon: '💻', color: 'bg-blue-500' },
-  { id: 3, title: 'إدارة', icon: '💼', color: 'bg-purple-500' },
-  { id: 4, title: 'إبداع', icon: '✨', color: 'bg-orange-500' },
+  { id: 1, title: 'تصميم', icon: '🎨' },
+  { id: 2, title: 'تطوير', icon: '💻' },
+  { id: 3, title: 'إدارة', icon: '💼' },
+  { id: 4, title: 'إبداع', icon: '✨' },
 ];
 
 const CategoriesScreen = () => {
@@ -57,7 +57,6 @@ const CategoriesScreen = () => {
         id: Date.now(),
         title: formData.title,
         icon: finalIcon,
-        color: 'bg-brand-teal',
       };
       setCategories([...categories, newCat]);
     }
@@ -81,7 +80,12 @@ const CategoriesScreen = () => {
             className="group bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 border border-white/10 shadow-xl relative overflow-hidden transition-all duration-500 hover:bg-white/10 hover:-translate-y-2"
           >
             <div className="flex flex-row-reverse items-center justify-between relative z-10">
-              <div className={`w-20 h-20 rounded-3xl ${cat.color} flex items-center justify-center text-4xl shadow-lg shadow-black/20`}>
+              {/* التعديل هنا: درجة اللون #0E2F35 افتح سيكه وشكلها اشيك */}
+              <div
+                // لو عايز تستخدم الدرجة المينت (البراند بتاعك) عشان تنور الأيقونة
+                className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-black/30 border-[0.5px] border-[#80A1BA]/50"
+                style={{ backgroundColor: '#0E2F35' }}
+              >
                 {cat.icon}
               </div>
 
@@ -109,7 +113,7 @@ const CategoriesScreen = () => {
         ))}
       </div>
 
-      {/* Floating Action Button - Dynamic Positioning (على اليمين بجانب السايدبار) */}
+      {/* Floating Action Button */}
       <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none transition-all duration-500 ease-in-out">
         <button
           onClick={() => handleOpenModal()}
@@ -180,7 +184,6 @@ const CategoriesScreen = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

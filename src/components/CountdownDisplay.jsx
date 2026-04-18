@@ -138,21 +138,21 @@ const CountdownDisplay = () => {
       {/* نافذة الإعدادات */}
       {showSettings && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-          <div className="w-full max-w-md bg-[#0a1f24] border border-white/10 p-8 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-8 text-brand-teal">
-              <h2 className="text-2xl font-bold tracking-tight">الإعدادات</h2>
-              <button onClick={() => setShowSettings(false)} className="hover:rotate-90 transition-transform"><X size={24} /></button>
+          <div className="w-full max-w-md bg-white/5 backdrop-blur-3xl border border-white/10 p-8 sm:p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="flex justify-between items-center mb-8 text-white relative z-10">
+              <h2 className="text-3xl font-bold tracking-tight">الإعدادات</h2>
+              <button onClick={() => setShowSettings(false)} className="hover:rotate-90 hover:text-brand-teal transition-all"><X size={24} /></button>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-6 relative z-10">
               <div>
-                <label className="block text-white/60 mb-2 mr-1 text-sm">وقت التركيز (دقيقة)</label>
-                <input type="number" defaultValue={focusTime} onChange={(e) => setFocusTime(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-teal/50 transition-all" min="1" max="60" />
+                <label className="block text-white/60 mb-2 mr-1 text-sm font-bold uppercase tracking-wider">وقت التركيز (دقيقة)</label>
+                <input type="number" defaultValue={focusTime} onChange={(e) => setFocusTime(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-brand-teal text-xl font-medium outline-none focus:border-brand-teal focus:bg-white/5 transition-all text-left" dir="ltr" min="1" max="60" />
               </div>
               <div>
-                <label className="block text-white/60 mb-2 mr-1 text-sm">وقت الراحة (دقيقة)</label>
-                <input type="number" defaultValue={breakTime} onChange={(e) => setBreakTime(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-teal/50 transition-all" min="1" max="60" />
+                <label className="block text-white/60 mb-2 mr-1 text-sm font-bold uppercase tracking-wider">وقت الراحة (دقيقة)</label>
+                <input type="number" defaultValue={breakTime} onChange={(e) => setBreakTime(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 text-brand-teal text-xl font-medium outline-none focus:border-brand-teal focus:bg-white/5 transition-all text-left" dir="ltr" min="1" max="60" />
               </div>
-              <button onClick={() => saveSettings(focusTime, breakTime)} className="w-full py-5 bg-brand-teal text-[#001b22] font-bold rounded-2xl mt-4 hover:brightness-110 active:scale-95 transition-all shadow-lg">حفظ الإعدادات</button>
+              <button onClick={() => saveSettings(focusTime, breakTime)} className="w-full py-4 mt-6 bg-brand-teal hover:bg-[#2b8a7b] text-white text-lg font-bold rounded-2xl shadow-[0_0_20px_rgba(52,165,147,0.4)] hover:shadow-[0_0_30px_rgba(52,165,147,0.6)] hover:-translate-y-1 transition-all">حفظ الإعدادات</button>
             </div>
           </div>
         </div>
