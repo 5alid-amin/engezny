@@ -247,7 +247,6 @@ const TasksScreen = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
