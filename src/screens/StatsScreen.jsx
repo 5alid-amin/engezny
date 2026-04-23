@@ -1,24 +1,77 @@
-import React, { useState } from 'react';
-import { Calendar, Award, Zap, CheckCircle2, Timer as TimerIcon, ChevronDown } from 'lucide-react';
-import { XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-
-const data = [
-  { name: 'السبت', hours: 7.5 },
-  { name: 'الأحد', hours: 7 },
-  { name: 'الإثنين', hours: 9 },
-  { name: 'الثلاثاء', hours: 5 },
-  { name: 'الأربعاء', hours: 8.5 },
-  { name: 'الخميس', hours: 3.5 },
-  { name: 'الجمعة', hours: 4 },
-];
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, Award, Zap, CheckCircle2, Timer as TimerIcon, ChevronDown, Star, Flame, Trophy, Rocket, Target } from 'lucide-react';
+import { XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, YAxis } from 'recharts';
+import axiosInstance from '../api/axiosInstance';
 
 const StatsScreen = () => {
-  const productivityStatus = "مثمر جداً";
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const filterRef = useRef(null); // مرجع للقائمة عشان نراقب الضغط براها
 
-  const years = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
-  const months = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-  const weeks = ["الأسبوع الأول", "الأسبوع الثاني", "الأسبوع الثالث", "الأسبوع الرابع"];
+  const getCurrentWeek = () => Math.floor((new Date().getDate() - 1) / 7) + 1;
+
+  const [filter, setFilter] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    week: getCurrentWeek()
+  });
+
+  const userId = localStorage.getItem('userId');
+
+  // إغلاق القائمة عند الضغط في أي مكان خارجي
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setShowFilters(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`/Statistics/dashboard`, {
+          params: {
+            userId: userId,
+            year: filter.year,
+            month: filter.month,
+            week: filter.week
+          }
+        });
+        setStats(response.data);
+      } catch (error) {
+        console.error("خطأ في جلب الإحصائيات:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) fetchStats();
+  }, [userId, filter]);
+
+  const chartData = stats?.weeklyFlow?.map((item) => ({
+    name: item.dayName,
+    hours: item.hours
+  })) || [];
+
+  const renderBadgeIcon = (iconName) => {
+    const iconSize = 80;
+    const iconClass = "drop-shadow-[0_0_15px_rgba(52,165,147,0.6)] text-[#34A593]";
+    switch (iconName) {
+      case 'boss_badge': return <Trophy size={iconSize} className={iconClass} />;
+      case 'fire_badge': return <Flame size={iconSize} className={iconClass} />;
+      case 'legendary_badge': return <Star size={iconSize} className={iconClass} />;
+      case 'distinguished_badge': return <Award size={iconSize} className={iconClass} />;
+      case 'active_badge': return <Rocket size={iconSize} className={iconClass} />;
+      default: return <Target size={iconSize} className={iconClass} />;
+    }
+  };
+
+  if (loading && !stats) return <div className="min-h-screen flex items-center justify-center text-white">جاري تحليل بياناتك...</div>;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#022c35] p-4 sm:p-8 font-sans relative" dir="rtl">
@@ -30,26 +83,40 @@ const StatsScreen = () => {
           <h2 className="text-4xl font-bold text-white tracking-tight">إحصائيات الإنجاز</h2>
         </div>
 
-        <div className="relative">
+        <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="bg-white/5 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3 shadow-xl hover:bg-white/10 transition-all text-white"
           >
             <Calendar size={18} className="text-[#34A593]" />
-            <span className="text-sm font-medium">هذا الأسبوع</span>
+            <span className="text-sm font-medium">تصفية النتائج</span>
             <ChevronDown size={16} className="text-white/40" />
           </button>
 
           {showFilters && (
             <div className="absolute top-full mt-2 left-0 w-64 bg-[#074C5B] border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] grid grid-cols-1 gap-3 animate-in fade-in zoom-in duration-200">
-              <select className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none cursor-pointer focus:border-[#34A593]">
-                {years.map(y => <option key={y} className="bg-[#074C5B]">{y}</option>)}
+              <select
+                value={filter.year}
+                onChange={(e) => setFilter({ ...filter, year: parseInt(e.target.value) })}
+                className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none"
+              >
+                {[2026, 2025, 2024].map(y => <option key={y} value={y} className="bg-[#074C5B]">{y}</option>)}
               </select>
-              <select className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none cursor-pointer focus:border-[#34A593]">
-                {months.map(m => <option key={m} className="bg-[#074C5B]">{m}</option>)}
+              <select
+                value={filter.month}
+                onChange={(e) => setFilter({ ...filter, month: parseInt(e.target.value) })}
+                className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none"
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1} className="bg-[#074C5B]">شهر {i + 1}</option>
+                ))}
               </select>
-              <select className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none cursor-pointer focus:border-[#34A593]">
-                {weeks.map(w => <option key={w} className="bg-[#074C5B]">{w}</option>)}
+              <select
+                value={filter.week}
+                onChange={(e) => setFilter({ ...filter, week: parseInt(e.target.value) })}
+                className="bg-white/10 border border-white/10 rounded-xl p-2 text-white text-xs outline-none"
+              >
+                {[1, 2, 3, 4, 5].map(w => <option key={w} value={w} className="bg-[#074C5B]">الأسبوع {w}</option>)}
               </select>
             </div>
           )}
@@ -61,41 +128,43 @@ const StatsScreen = () => {
 
         {/* Left Column */}
         <div className="w-full lg:w-[320px] flex flex-col gap-6">
-          <div className="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
-            <div className="absolute -top-10 -left-10 w-32 h-32 bg-[#34A593]/5 rounded-full blur-3xl"></div>
-            <h3 className="text-xl font-semibold text-white text-right mb-8 tracking-wide">توزيع العمل العميق</h3>
-            <div className="flex flex-col gap-6 relative z-10">
-              <DistributionRow label="تطوير البرمجيات" percentage="42%" color="#34A593" width="42%" />
-              <DistributionRow label="التخطيط الاستراتيجي" percentage="28%" color="#ffffff99" width="28%" />
-              <DistributionRow label="إدارة المحتوى" percentage="15%" color="#ffffff44" width="15%" />
+          <div className="bg-gradient-to-br from-[#074C5B] to-[#002229] rounded-[2.5rem] p-8 shadow-2xl border border-white/5 relative overflow-hidden group flex flex-col items-center justify-center text-center min-h-[300px]">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[#34A593]/20 rounded-full blur-[60px]"></div>
+            <h3 className="text-3xl font-bold text-white mb-8 tracking-wide z-10">
+              أسبوع <span className="text-[#34A593]">{stats?.weekStatus}</span> جداً!
+            </h3>
+            <div className="relative z-10 animate-bounce duration-[2000ms]">
+              {renderBadgeIcon(stats?.badgeIcon)}
             </div>
-            <div className="mt-10 pt-8 border-t border-white/5 text-center">
-              <p className="text-xs text-white/40 mb-2 uppercase tracking-widest">إجمالي ساعات التركيز</p>
-              <p className="text-5xl font-light text-[#34A593] drop-shadow-[0_0_20px_rgba(52,165,147,0.4)]">32.5</p>
-              <p className="text-[10px] text-white/30 mt-2 opacity-50">ساعة هذا الأسبوع</p>
+            <div className="mt-6 inline-block bg-white/5 backdrop-blur-md border border-white/5 px-6 py-2 rounded-full text-[12px] font-bold tracking-widest text-[#34A593] uppercase z-10 shadow-lg">
+              {stats?.badgeIcon?.replace('_', ' ')}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#074C5B] to-[#002229] rounded-[2.5rem] p-8 shadow-2xl border border-white/5 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-[#34A593]/20 rounded-full blur-[60px] group-hover:bg-[#34A593]/30 transition-all"></div>
-            <div className="inline-block bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest mb-6 text-[#34A593] uppercase">إنجازات مميزة</div>
-            <h3 className="text-3xl font-bold text-white mb-3 tracking-wide">أسبوع {productivityStatus}!</h3>
-            <p className="text-sm text-white/60 mb-8 leading-relaxed">لقد أكملت 24 مهمة عالية الأولوية، وهو رقم قياسي جديد.</p>
-            <div className="flex flex-col gap-4">
-              <AchievementRow icon={<Award size={20} />} title="وسام المثابرة" subtitle="5 أيام عمل عميق متتالية" />
-              <AchievementRow icon={<Zap size={20} />} title="نمو الإنتاجية" subtitle="+18% مقارنة بالأسبوع السابق" />
+          <div className="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden bg-clip-padding">
+            <h3 className="text-xl font-semibold text-white text-right mb-8 tracking-wide">توزيع العمل العميق</h3>
+            <div className="flex flex-col gap-6 relative z-10">
+              {stats?.deepWorkDistribution?.map((item, idx) => (
+                <DistributionRow
+                  key={idx}
+                  label={item.categoryName}
+                  percentage={`${item.percentage}%`}
+                  color={idx === 0 ? "#34A593" : "#ffffff99"}
+                  width={`${item.percentage}%`}
+                />
+              ))}
+            </div>
+            <div className="mt-10 pt-8 border-t border-white/5 text-center">
+              <p className="text-xs text-white/40 mb-2 uppercase tracking-widest">إجمالي ساعات التركيز</p>
+              <p className="text-5xl font-light text-[#34A593] drop-shadow-[0_0_20px_rgba(52,165,147,0.4)]">{stats?.totalFocusHours}</p>
+              <p className="text-[10px] text-white/30 mt-2 opacity-50">ساعة للفترة المحددة</p>
             </div>
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="flex-1 flex flex-col gap-6 " >
-          <div className="bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/10 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-[520px]">
-            {/* تعديل: الحواف الدائرية للخلفية السوداء ورجوع كلمة السبت */}
-            <div className="absolute inset-x-0 top-0 bottom-[-60px] opacity-[0.03] pointer-events-none rounded-[3rem]"
-              style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }}>
-            </div>
-
+        {/* Right Column (Chart Area) */}
+        <div className="flex-1 flex flex-col gap-6 ">
+          <div className="bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/10 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-[520px] bg-clip-padding">
             <div className="flex justify-between items-start mb-12 relative z-10 text-right">
               <div className="flex gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#34A593] shadow-[0_0_10px_#34A593]"></div>
@@ -109,22 +178,28 @@ const StatsScreen = () => {
 
             <div className="flex-1 w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ right: 30, left: 10, bottom: 20 }}>
+                <AreaChart data={chartData} margin={{ right: 30, left: 10, bottom: 20 }}>
                   <defs>
                     <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#34A593" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#34A593" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  {/* تعديل الجريد لمربعات خفيفة وجميلة */}
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={true}
+                    horizontal={true}
+                    stroke="rgba(255,255,255,0.05)"
+                  />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
                     dy={10}
-                    padding={{ left: 20, right: 20 }}
                   />
+                  <YAxis hide domain={[0, 'dataMax + 1']} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#074C5B', borderRadius: '15px', border: '1px solid rgba(52,165,147,0.4)', textAlign: 'right' }}
                     itemStyle={{ color: '#34A593' }}
@@ -148,15 +223,15 @@ const StatsScreen = () => {
             <SummaryCard
               icon={<CheckCircle2 size={26} />}
               label="معدل الإنجاز"
-              value="94%"
-              subValue="أعلى من المتوسط بـ 5%"
+              value={`${stats?.completionRate}%`}
+              subValue="بناءً على هدف 30 مهمة/أسبوع"
               isPositive={true}
             />
             <SummaryCard
               icon={<TimerIcon size={26} />}
-              label="متوسط التركيز"
-              value={<>5<span className="text-xl mx-1 opacity-50">س</span> 42<span className="text-xl mx-1 opacity-50">د</span></>}
-              subValue="12% زيادة عن الأسبوع الماضي"
+              label="متوسط التركيز اليومي"
+              value={<>{Math.floor(stats?.averageFocusMinutes / 60)}<span className="text-xl mx-1 opacity-50">س</span> {Math.floor(stats?.averageFocusMinutes % 60)}<span className="text-xl mx-1 opacity-50">د</span></>}
+              subValue="متوسط وقت اليوم الواحد"
               isPositive={true}
             />
           </div>
@@ -173,33 +248,20 @@ const DistributionRow = ({ label, percentage, color, width }) => (
       <span>{label}</span>
     </div>
     <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-      <div className="h-full rounded-full transition-all duration-1000" style={{ width: width, backgroundColor: color, boxShadow: `0 0 15px ${color}66` }}></div>
-    </div>
-  </div>
-);
-
-const AchievementRow = ({ icon, title, subtitle }) => (
-  <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl flex items-center justify-between border border-white/5 hover:bg-white/10 transition-all cursor-default group">
-    <div className="w-11 h-11 rounded-xl bg-[#34A593]/10 flex items-center justify-center text-[#34A593] group-hover:scale-110 transition-transform">
-      {icon}
-    </div>
-    <div className="text-right flex-1 pr-4">
-      <h4 className="text-sm font-bold text-white/90">{title}</h4>
-      <p className="text-[11px] text-white/40 font-medium">{subtitle}</p>
+      <div className="h-full rounded-full transition-all duration-1000" style={{ width: width, backgroundColor: color }}></div>
     </div>
   </div>
 );
 
 const SummaryCard = ({ icon, label, value, subValue, isPositive }) => (
-  <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 flex items-center justify-between hover:border-[#34A593]/30 transition-all shadow-xl">
-    <div className="w-16 h-16 rounded-2xl bg-[#34A593]/10 border border-[#34A593]/20 flex items-center justify-center text-[#34A593] shadow-inner">
+  <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 flex items-center justify-between hover:border-[#34A593]/30 transition-all bg-clip-padding">
+    <div className="w-16 h-16 rounded-2xl bg-[#34A593]/10 border border-[#34A593]/20 flex items-center justify-center text-[#34A593]">
       {icon}
     </div>
     <div className="text-right">
       <p className="text-xs font-bold text-white/30 mb-2 uppercase tracking-widest">{label}</p>
       <p className="text-4xl font-bold text-white mb-2">{value}</p>
       <p className={`text-[10px] font-bold ${isPositive ? 'text-[#34A593]' : 'text-red-400'} flex items-center gap-1 justify-end`}>
-        {isPositive && <CheckCircle2 size={10} />}
         {subValue}
       </p>
     </div>

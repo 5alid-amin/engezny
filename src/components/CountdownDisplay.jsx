@@ -1,56 +1,130 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Maximize, Settings, X } from 'lucide-react';
 import CountdownBox from './CountdownBox';
+import axiosInstance from '../api/axiosInstance'; // استيراد الاكسيوس
+
+// استيراد ملفات الأصوات من المسار اللي حددته
+import focusStartSound from '../assets/sounds/focus_start.wav';
+import focusCompleteSound from '../assets/sounds/focus_complete.wav';
+import breakCompleteSound from '../assets/sounds/break_complete.wav';
 
 const CountdownDisplay = () => {
-  const [focusTime, setFocusTime] = useState(25);
-  const [breakTime, setBreakTime] = useState(5);
-  const [isFocusSession, setIsFocusSession] = useState(true);
-  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
-  const [isActive, setIsActive] = useState(false);
+  // --- منطق الحفظ والاسترجاع من localStorage ---
+  const [focusTime, setFocusTime] = useState(() => {
+    const saved = localStorage.getItem('timerFocusTime');
+    return saved ? parseInt(saved) : 25;
+  });
+  const [breakTime, setBreakTime] = useState(() => {
+    const saved = localStorage.getItem('timerBreakTime');
+    return saved ? parseInt(saved) : 5;
+  });
+  const [isFocusSession, setIsFocusSession] = useState(() => {
+    const saved = localStorage.getItem('timerIsFocusSession');
+    return saved === null ? true : saved === 'true';
+  });
+  const [isActive, setIsActive] = useState(() => {
+    const saved = localStorage.getItem('timerIsActive');
+    return saved === 'true';
+  });
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const savedSeconds = localStorage.getItem('timerSecondsLeft');
+    const savedEndTime = localStorage.getItem('timerTargetEndTime');
+    const savedIsActive = localStorage.getItem('timerIsActive') === 'true';
+
+    if (savedIsActive && savedEndTime) {
+      const remaining = Math.max(0, Math.ceil((parseInt(savedEndTime) - Date.now()) / 1000));
+      return remaining;
+    }
+    return savedSeconds ? parseInt(savedSeconds) : 25 * 60;
+  });
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const containerRef = useRef(null);
 
-  // منطق الأصوات المبهجة
-  const playJoyfulAlert = (sessionType) => {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const playNote = (freq, startTime, duration) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
+  const userId = localStorage.getItem('userId');
 
-    if (sessionType === 'focus') {
-      playNote(523.25, ctx.currentTime, 1.0);
-      playNote(659.25, ctx.currentTime + 0.2, 1.0);
-      playNote(783.99, ctx.currentTime + 0.4, 1.2);
-    } else {
-      playNote(440, ctx.currentTime, 1.5);
-      playNote(554.37, ctx.currentTime + 0.3, 1.5);
+  // حفظ الحالة في localStorage عند أي تغيير
+  useEffect(() => {
+    localStorage.setItem('timerFocusTime', focusTime);
+    localStorage.setItem('timerBreakTime', breakTime);
+    localStorage.setItem('timerIsFocusSession', isFocusSession);
+    localStorage.setItem('timerIsActive', isActive);
+    if (!isActive) {
+      localStorage.setItem('timerSecondsLeft', secondsLeft);
+    }
+  }, [focusTime, breakTime, isFocusSession, isActive, secondsLeft]);
+
+  // ميثود تسجيل الجلسة في الباك إند
+  const recordFocusSession = async (minutes) => {
+    try {
+      await axiosInstance.post('/FocusSessions', {
+        userId: parseInt(userId),
+        durationInMinutes: parseInt(minutes)
+      });
+      console.log("تم تسجيل جلسة التركيز بنجاح 💪");
+    } catch (error) {
+      console.error("فشل في تسجيل الجلسة:", error);
     }
   };
 
+  // ميثود تشغيل الأصوات الجديدة
+  const playSound = (soundFile) => {
+    const audio = new Audio(soundFile);
+    audio.play().catch(err => console.error("خطأ في تشغيل الصوت:", err));
+  };
+
+  // المنطق الرئيسي للعداد والمزامنة
   useEffect(() => {
     let interval = null;
+
     if (isActive && secondsLeft > 0) {
-      interval = setInterval(() => setSecondsLeft(p => p - 1), 1000);
+      interval = setInterval(() => {
+        const endTime = localStorage.getItem('timerTargetEndTime');
+        if (endTime) {
+          const remaining = Math.max(0, Math.ceil((parseInt(endTime) - Date.now()) / 1000));
+          setSecondsLeft(remaining);
+        } else {
+          setSecondsLeft(prev => prev - 1);
+        }
+      }, 1000);
     } else if (isActive && secondsLeft === 0) {
-      playJoyfulAlert(isFocusSession ? 'focus' : 'break');
+      // تشغيل أصوات نهاية الجلسات
+      if (isFocusSession) {
+        playSound(focusCompleteSound); // خلصنا فوكس وداخلين بريك
+        recordFocusSession(focusTime);
+      } else {
+        playSound(breakCompleteSound); // خلصنا البريك
+      }
+
       const nextSessionIsFocus = !isFocusSession;
+      const nextDuration = (nextSessionIsFocus ? focusTime : breakTime) * 60;
+
       setIsFocusSession(nextSessionIsFocus);
-      setSecondsLeft((nextSessionIsFocus ? focusTime : breakTime) * 60);
+      setSecondsLeft(nextDuration);
+
+      // تحديث وقت الانتهاء للجلسة القادمة لضمان الاستمرارية
+      const newEndTime = Date.now() + nextDuration * 1000;
+      localStorage.setItem('timerTargetEndTime', newEndTime);
     }
+
     return () => clearInterval(interval);
   }, [isActive, secondsLeft, isFocusSession, focusTime, breakTime]);
+
+  // مزامنة الوقت فور العودة للتاب (Visibility Change)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isActive) {
+        const endTime = localStorage.getItem('timerTargetEndTime');
+        if (endTime) {
+          const remaining = Math.max(0, Math.ceil((parseInt(endTime) - Date.now()) / 1000));
+          setSecondsLeft(remaining);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isActive]);
 
   useEffect(() => {
     const fsHandler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -62,10 +136,26 @@ const CountdownDisplay = () => {
     if (containerRef.current) containerRef.current.requestFullscreen();
   };
 
-  // الدالة المعدلة لتبدأ وتكبر الشاشة فوراً
   const handleStartAction = () => {
+    // تشغيل صوت البداية
+    playSound(focusStartSound);
+
     handleEnterFullscreen();
+    const endTime = Date.now() + secondsLeft * 1000;
+    localStorage.setItem('timerTargetEndTime', endTime);
     setIsActive(true);
+  };
+
+  const handlePauseAction = () => {
+    setIsActive(false);
+    localStorage.removeItem('timerTargetEndTime');
+  };
+
+  const handleResetAction = () => {
+    setIsActive(false);
+    localStorage.removeItem('timerTargetEndTime');
+    const resetSeconds = (isFocusSession ? focusTime : breakTime) * 60;
+    setSecondsLeft(resetSeconds);
   };
 
   const saveSettings = (f, b) => {
@@ -73,7 +163,14 @@ const CountdownDisplay = () => {
     const newB = Math.min(60, Math.max(1, parseInt(b) || 1));
     setFocusTime(newF);
     setBreakTime(newB);
-    setSecondsLeft((isFocusSession ? newF : newB) * 60);
+    const newSeconds = (isFocusSession ? newF : newB) * 60;
+    setSecondsLeft(newSeconds);
+
+    if (isActive) {
+      const newEndTime = Date.now() + newSeconds * 1000;
+      localStorage.setItem('timerTargetEndTime', newEndTime);
+    }
+
     setShowSettings(false);
   };
 
@@ -125,10 +222,10 @@ const CountdownDisplay = () => {
           </button>
         ) : (
           <div className="flex gap-8">
-            <button onClick={() => setIsActive(false)} className="p-6 rounded-full bg-white/[0.03] border border-white/10 text-white hover:text-brand-teal transition-all active:scale-90">
+            <button onClick={handlePauseAction} className="p-6 rounded-full bg-white/[0.03] border border-white/10 text-white hover:text-brand-teal transition-all active:scale-90">
               <Pause size={38} />
             </button>
-            <button onClick={() => { setIsActive(false); setSecondsLeft((isFocusSession ? focusTime : breakTime) * 60); }} className="p-6 rounded-full bg-white/[0.03] border border-white/10 text-white hover:text-red-400 transition-all active:scale-90">
+            <button onClick={handleResetAction} className="p-6 rounded-full bg-white/[0.03] border border-white/10 text-white hover:text-red-400 transition-all active:scale-90">
               <RotateCcw size={38} />
             </button>
           </div>

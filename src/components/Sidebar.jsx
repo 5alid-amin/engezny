@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
   Zap,
@@ -8,20 +8,16 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 
-const BrainLogo = ({ isCollapsed }) => (
-  <div className={`relative ${isCollapsed ? 'w-10 h-10' : 'w-16 h-14'} transition-all duration-300 ease-out`}>
-    <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <path d="M50 10C65 10 78 22 78 38C78 50 72 60 62 66" stroke="#34A593" strokeWidth="6" strokeLinecap="round" className="opacity-90" />
-      <path d="M58 25H70" stroke="#34A593" strokeWidth="5" strokeLinecap="round" className="opacity-70" />
-      <path d="M58 38H75" stroke="#34A593" strokeWidth="5" strokeLinecap="round" className="opacity-70" />
-      <path d="M50 10C35 10 22 22 22 38C22 54 35 66 50 66" stroke="white" strokeWidth="6" strokeLinecap="round" className="opacity-80" />
-      <circle cx="50" cy="38" r="6" fill="#34A593" className="animate-pulse" />
-    </svg>
-  </div>
-);
-
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [realName, setRealName] = useState("");
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setRealName(storedName);
+    }
+  }, []);
 
   const navItems = [
     { id: 'tasks', label: 'المهام', icon: <CheckCircle2 size={26} /> },
@@ -30,93 +26,117 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { id: 'stats', label: 'الإحصائيات', icon: <LayoutDashboard size={26} /> },
   ];
 
+  const getInitials = (name) => {
+    if (!name) return "خ";
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]);
+    }
+    return name.slice(0, 1);
+  };
+
   return (
-    <div className="h-screen sticky top-0 z-20 flex items-center pr-4 overflow-visible">
+    <div className="h-screen sticky top-0 z-20 flex items-center pr-4 overflow-visible" dir="rtl">
       <div
         className={`h-[96vh] flex flex-col py-10 bg-[#003B46]/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)]
         border border-white/10 text-white relative 
-        transition-all duration-300 ease-out
-        ${isCollapsed ? 'w-[100px] rounded-[2.5rem] px-3' : 'w-[300px] rounded-[3.5rem] px-6'}`}
+        transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1)
+        ${isCollapsed ? 'w-[90px] rounded-[2.5rem] px-2' : 'w-[280px] rounded-[3.5rem] px-5'}`}
       >
         {/* Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -left-5 top-20 bg-[#34A593] text-[#003B46] w-10 h-10 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(52,165,147,0.4)] hover:scale-110 active:scale-95 transition-all z-50 border border-white/20"
+          className="absolute -left-4 top-20 bg-[#34A593] text-[#003B46] w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(52,165,147,0.3)] hover:scale-110 active:scale-95 transition-all z-50 border border-white/10"
         >
-          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {isCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
 
-        {/* Logo Section */}
-        <div className="flex flex-col items-center mb-12">
-          <BrainLogo isCollapsed={isCollapsed} />
-          <div className={`h-[2px] bg-gradient-to-r from-transparent via-[#34A593]/40 to-transparent transition-all duration-300 ease-out mt-6 ${isCollapsed ? 'w-8' : 'w-24'}`} />
+        {/* Header / Logo Section */}
+        <div className="flex flex-col items-center mb-12 overflow-hidden">
+          {!isCollapsed ? (
+            <span className="text-2xl font-bold text-white tracking-tight whitespace-nowrap animate-in fade-in duration-500">
+              دماغ {realName.split(' ')[0] || "خالد"}
+            </span>
+          ) : (
+            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+              <span className="text-[#34A593] font-bold text-2xl">د</span>
+            </div>
+          )}
+          <div className={`h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-all duration-500 mt-6 ${isCollapsed ? 'w-8' : 'w-40'}`} />
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex flex-col w-full">
+        <nav className="flex flex-col w-full gap-3">
           {navItems.map((item, index) => (
             <React.Fragment key={item.id}>
               <button
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center transition-all duration-200 relative group mb-1
-                  ${isCollapsed ? 'justify-center h-16 w-16 mx-auto rounded-2xl' : 'justify-end gap-5 p-4 rounded-2xl w-full'}
-                  ${activeTab === item.id ? 'bg-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]' : 'hover:bg-white/5'}
+                className={`flex items-center transition-all duration-400 relative group
+                  ${isCollapsed ? 'justify-center h-16 w-16 mx-auto rounded-2xl' : 'justify-start gap-5 p-5 rounded-[1.8rem] w-full'}
+                  ${activeTab === item.id
+                    ? 'bg-white/10 backdrop-blur-md border border-white/10 shadow-xl'
+                    : 'hover:bg-white/5 hover:translate-x-[-4px]'
+                  }
                 `}
               >
-                {/* Label - Back to original hover logic but with faster transition */}
+                <div className={`transition-all duration-300 ${activeTab === item.id
+                  ? 'text-[#34A593] scale-110 drop-shadow-[0_0_8px_rgba(52,165,147,0.5)]'
+                  : 'text-white/30 group-hover:text-white/80'
+                  }`}>
+                  {item.icon}
+                </div>
+
                 {!isCollapsed && (
                   <span
-                    className={`text-xl transition-all duration-200 ease-out transform
+                    className={`text-xl transition-all duration-500 ease-out whitespace-nowrap
                     ${activeTab === item.id
-                        ? 'text-white font-bold opacity-100 translate-x-0'
-                        : 'text-white/40 font-medium group-hover:text-white/80 group-hover:-translate-x-1 opacity-100'
+                        ? 'text-white font-bold opacity-100'
+                        : 'text-white/40 font-semibold group-hover:text-white/90'
                       }`}
                   >
                     {item.label}
                   </span>
                 )}
 
-                {/* Icon */}
-                <div className={`transition-all duration-200 ${activeTab === item.id
-                  ? 'text-[#34A593] drop-shadow-[0_0_10px_rgba(52,165,147,0.8)] scale-110'
-                  : 'text-white/30 group-hover:text-white/80 group-hover:scale-105'
-                  }`}>
-                  {item.icon}
-                </div>
-
-                {/* Active Indicator Line */}
                 {activeTab === item.id && (
-                  <div className="absolute right-0 w-1 h-8 bg-[#34A593] rounded-full shadow-[0_0_15px_#34A593] animate-pulse" />
+                  <div className={`absolute bg-[#34A593] rounded-full shadow-[0_0_12px_#34A593] animate-pulse
+                    ${isCollapsed ? 'bottom-2 w-1.5 h-1.5' : 'left-4 w-1.5 h-8'}`}
+                  />
                 )}
               </button>
 
-              {/* Minimal Divider */}
+              {/* فاصل بسيط جداً بين التابات */}
               {index !== navItems.length - 1 && (
-                <div className={`h-[1px] bg-white/5 transition-all duration-300 ease-out mx-auto ${isCollapsed ? 'w-8 my-1' : 'w-full my-1'}`} />
+                <div className={`h-[1px] bg-white/[0.02] mx-auto ${isCollapsed ? 'w-6' : 'w-4/5'}`} />
               )}
             </React.Fragment>
           ))}
         </nav>
 
-        {/* Bottom Section - Account */}
-        <div className={`mt-auto pt-6 border-t border-white/5 ${isCollapsed ? 'flex justify-center' : ''}`}>
+        {/* Footer / Account Section */}
+        <div className="mt-auto pt-8 border-t border-white/5 flex flex-col items-center">
           <button
             onClick={() => setActiveTab('account')}
-            className={`flex items-center group transition-all duration-300 ease-out relative
-            ${isCollapsed ? 'justify-center' : 'justify-end gap-4 p-3 rounded-[2rem] w-full'}
-            ${activeTab === 'account' ? 'bg-white/10 border border-white/10' : 'hover:bg-white/5'}`}
+            className={`transition-all duration-500 ease-out group relative flex items-center justify-center
+            ${isCollapsed ? 'w-16 h-16' : 'w-20 h-20'}
+            ${activeTab === 'account' ? 'scale-110' : 'hover:scale-105'}`}
           >
-            {!isCollapsed && (
-              <div className="text-right">
-                <p className="text-white font-bold text-sm tracking-tight">خالد أمين</p>
-                <p className="text-[#34A593] text-[9px] uppercase font-black tracking-[0.2em] opacity-80">Premium</p>
-              </div>
-            )}
-
-            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#34A593] to-[#074C5B] border-2 border-white/10 flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:shadow-[#34A593]/20 transition-all duration-300">
-              خ م
+            {/* أيقونة الحساب الكبيرة والزجاجية */}
+            <div className={`w-full h-full rounded-[1.8rem] transition-all duration-500
+              bg-white/5 backdrop-blur-2xl border border-white/10 
+              flex items-center justify-center text-white font-bold text-xl
+              shadow-2xl group-hover:border-[#34A593]/40
+              ${activeTab === 'account' ? 'border-[#34A593]/60 bg-[#34A593]/10 ring-4 ring-[#34A593]/5' : ''}`}>
+              {getInitials(realName)}
             </div>
+
+            {/* نقطة حالة الحساب */}
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#34A593] border-4 border-[#003B46] rounded-full shadow-lg" />
           </button>
+
+          {!isCollapsed && (
+            <span className="text-white/20 text-[10px] mt-3 font-bold tracking-[0.3em] uppercase">Account</span>
+          )}
         </div>
       </div>
     </div>

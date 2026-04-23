@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import CountdownDisplay from './components/CountdownDisplay';
 import TasksScreen from './screens/TasksScreen';
@@ -9,8 +9,21 @@ import AuthScreen from './screens/AuthScreen';
 import { Settings } from 'lucide-react';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem('token');
+    return token && token !== 'undefined' && token !== 'null';
+  });
   const [activeTab, setActiveTab] = useState('tasks');
+
+  // التأكد من وجود التوكن عند التحميل الأول
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && token !== 'undefined' && token !== 'null') {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -18,6 +31,9 @@ function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
     setIsAuthenticated(false);
   };
 

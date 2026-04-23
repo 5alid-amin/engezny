@@ -1,33 +1,43 @@
-import React, { useState } from 'react';
-import {
-  Pencil,
-  Trash2,
-  Check,
-  Plus,
-  X
-} from 'lucide-react';
-
-const initialCategories = [
-  { id: 1, title: 'تصميم', icon: '🎨' },
-  { id: 2, title: 'تطوير', icon: '💻' },
-  { id: 3, title: 'إدارة', icon: '💼' },
-  { id: 4, title: 'إبداع', icon: '✨' },
-];
+import React, { useState, useEffect } from 'react';
+import { Pencil, Trash2, Check, Plus, X, Loader2 } from 'lucide-react';
+import axiosInstance from '../api/axiosInstance'; // Interceptor بتاعنا
 
 const CategoriesScreen = () => {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // سحب الـ userId من التخزين المحلي
+  const userId = localStorage.getItem('userId');
 
   // Modal States
   const [formData, setFormData] = useState({ title: '', icon: '', useCustomIcon: false });
+
+  // 1. جلب البيانات من الباك إند عند تحميل الصفحة
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      // GetById(int userid) -> api/Categories/{userid}
+      const response = await axiosInstance.get(`/Categories/${userId}`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error("خطأ في جلب التصنيفات:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenModal = (cat = null) => {
     if (cat) {
       setIsEditing(cat.id);
       setFormData({
-        title: cat.title,
-        icon: cat.icon,
+        title: cat.name, // الباك إند بيبعت name
+        icon: cat.iconName, // الباك إند بيبعت iconName
         useCustomIcon: true
       });
     } else {
@@ -37,30 +47,48 @@ const CategoriesScreen = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setCategories(categories.filter(c => c.id !== id));
+  // 2. حذف تصنيف
+  const handleDelete = async (id) => {
+    if (!window.confirm("متأكد إنك عايز تحذف التصنيف ده؟")) return;
+
+    try {
+      // Delete(int id, [FromQuery] int userId)
+      await axiosInstance.delete(`/Categories/${id}?userId=${userId}`);
+      setCategories(categories.filter(c => c.id !== id));
+    } catch (error) {
+      alert("فشل الحذف، تأكد من الصلاحيات");
+    }
   };
 
-  const handleSave = () => {
+  // 3. إضافة أو تعديل
+  const handleSave = async () => {
     if (!formData.title) return;
 
     const finalIcon = formData.useCustomIcon && formData.icon
       ? formData.icon
       : formData.title.charAt(0).toUpperCase();
 
-    if (isEditing) {
-      setCategories(categories.map(c =>
-        c.id === isEditing ? { ...c, title: formData.title, icon: finalIcon } : c
-      ));
-    } else {
-      const newCat = {
-        id: Date.now(),
-        title: formData.title,
-        icon: finalIcon,
-      };
-      setCategories([...categories, newCat]);
+    const payload = {
+      name: formData.title,
+      iconName: finalIcon,
+      userId: parseInt(userId)
+    };
+
+    try {
+      if (isEditing) {
+        // Update(int id, CreateCategoryDto dto, int userId)
+        const response = await axiosInstance.put(`/Categories/${isEditing}?userId=${userId}`, payload);
+        setCategories(categories.map(c => c.id === isEditing ? response.data : c));
+      } else {
+        // Create(CreateCategoryDto dto)
+        const response = await axiosInstance.post('/Categories', payload);
+        setCategories([...categories, response.data]);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("خطأ في الحفظ:", error);
+      alert("حصلت مشكلة وأحنا بنحفظ البيانات");
     }
-    setIsModalOpen(false);
   };
 
   return (
@@ -68,53 +96,60 @@ const CategoriesScreen = () => {
 
       {/* Header Section */}
       <div className="flex flex-col items-center justify-center text-center mt-4 mb-12">
-        <h2 className="text-4xl text-white font-bold mb-3 tracking-tight">هنركز على إيه الفترة دي؟</h2>
-        <p className="text-brand-gray text-lg opacity-70">اختر الفئة التي تعبر عن مشروعك القادم</p>
+        <h2 className="text-4xl text-white font-bold mb-3 tracking-tight">هتركز علي اي الفتره دي..</h2>
+        <p className="text-brand-gray text-lg opacity-70">متسرحش اوي ..</p>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="text-brand-teal animate-spin" size={48} />
+        </div>
+      )}
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto w-full mb-24">
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="group bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 border border-white/10 shadow-xl relative overflow-hidden transition-all duration-500 hover:bg-white/10 hover:-translate-y-2"
-          >
-            <div className="flex flex-row-reverse items-center justify-between relative z-10">
-              {/* التعديل هنا: درجة اللون #0E2F35 افتح سيكه وشكلها اشيك */}
-              <div
-                // لو عايز تستخدم الدرجة المينت (البراند بتاعك) عشان تنور الأيقونة
-                className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-black/30 border-[0.5px] border-[#80A1BA]/50"
-                style={{ backgroundColor: '#0E2F35' }}
-              >
-                {cat.icon}
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto w-full mb-24">
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="group bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 border border-white/10 shadow-xl relative overflow-hidden transition-all duration-500 hover:bg-white/10 hover:-translate-y-2"
+            >
+              <div className="flex flex-row-reverse items-center justify-between relative z-10">
+                <div
+                  className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-lg shadow-black/30 border-[0.5px] border-[#80A1BA]/50"
+                  style={{ backgroundColor: '#0E2F35' }}
+                >
+                  {cat.iconName}
+                </div>
+
+                <div className="text-right">
+                  <span className="text-xs tracking-[0.2em] text-brand-gray/50 uppercase block mb-2">CATEGORY / {cat.id}</span>
+                  <h3 className="text-3xl text-white font-bold">{cat.name}</h3>
+                </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-xs tracking-[0.2em] text-brand-gray/50 uppercase block mb-2">CATEGORY / {cat.id}</span>
-                <h3 className="text-3xl text-white font-bold">{cat.title}</h3>
+              <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
+                <button
+                  onClick={() => handleOpenModal(cat)}
+                  className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-brand-teal hover:bg-white/10 transition-all"
+                >
+                  <Pencil size={20} />
+                </button>
+                <button
+                  onClick={() => handleDelete(cat.id)}
+                  className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-red-400 hover:bg-white/10 transition-all"
+                >
+                  <Trash2 size={20} />
+                </button>
               </div>
             </div>
-
-            <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
-              <button
-                onClick={() => handleOpenModal(cat)}
-                className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-brand-teal hover:bg-white/10 transition-all"
-              >
-                <Pencil size={20} />
-              </button>
-              <button
-                onClick={() => handleDelete(cat.id)}
-                className="p-3 rounded-xl bg-white/5 text-brand-gray hover:text-red-400 hover:bg-white/10 transition-all"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none transition-all duration-500 ease-in-out">
+      <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none">
         <button
           onClick={() => handleOpenModal()}
           className="w-20 h-20 bg-brand-teal text-brand-dark rounded-full flex items-center justify-center shadow-[0_15px_40px_rgba(52,165,147,0.4)] transition-all duration-300 hover:scale-110 active:scale-95 pointer-events-auto"
@@ -123,12 +158,12 @@ const CategoriesScreen = () => {
         </button>
       </div>
 
-      {/* Add/Edit Category Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-brand-dark/90 backdrop-blur-xl" onClick={() => setIsModalOpen(false)} />
 
-          <div className="bg-brand-surface border border-white/10 w-full max-w-lg rounded-[3.5rem] p-12 relative z-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+          <div className="bg-brand-surface border border-white/10 w-full max-w-lg rounded-[3.5rem] p-12 relative z-10 shadow-2xl">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-8 left-8 text-white/30 hover:text-white transition-colors">
               <X size={32} />
             </button>

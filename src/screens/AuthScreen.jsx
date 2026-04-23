@@ -1,15 +1,49 @@
 import React, { useState } from 'react';
-import { User, ArrowLeft, Zap, Eye, EyeOff } from 'lucide-react';
+import { User, ArrowLeft, Zap, Eye, EyeOff, Loader2 } from 'lucide-react';
+// استيراد الـ axiosInstance اللي انت مجهزه
+import axiosInstance from '../api/axiosInstance';
 
 const AuthScreen = ({ onLogin }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({ username: '', password: '' });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (formData.username && formData.password) {
-            onLogin();
+        setError('');
+        setLoading(true);
+
+        // تحديد الـ Endpoint بناءً على حالة الشاشة (Login ولا Register)
+        const endpoint = isLogin ? '/auth/login' : '/auth/register';
+
+        try {
+            const response = await axiosInstance.post(endpoint, {
+                username: formData.username,
+                password: formData.password
+            });
+
+            if (isLogin) {
+                // في حالة الدخول: نخزن البيانات اللي راجعة من الباك إند (التعديل اللي عملته)
+                const { token, userId, userName } = response.data;
+
+                localStorage.setItem('token', token);
+                localStorage.setItem('userId', userId);
+                localStorage.setItem('userName', userName);
+
+                // استدعاء دالة الـ Login الأصلية عشان تحولنا للداشبورد
+                onLogin();
+            } else {
+                // في حالة التسجيل: نرجعه لصفحة اللوجين عشان يدخل بالبيانات الجديدة
+                setIsLogin(true);
+                alert("تم إنشاء الحساب بنجاح يا بطل، سجل دخولك دلوقتي!");
+            }
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data || "حصلت مشكلة، اتأكد من البيانات يا وحش");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -31,9 +65,16 @@ const AuthScreen = ({ onLogin }) => {
                     <h2 className="text-3xl font-black text-white mb-2 text-center tracking-tight">
                         {isLogin ? 'مرحباً بعودتك' : 'إنشاء حساب جديد'}
                     </h2>
-                    <p className="text-white/40 mb-10 text-center text-sm">
+                    <p className="text-white/40 mb-6 text-center text-sm">
                         {isLogin ? 'سجل دخولك لمتابعة إنتاجيتك' : 'ابدأ رحلة الإنجاز معنا اليوم'}
                     </p>
+
+                    {/* عرض رسائل الخطأ إن وجدت */}
+                    {error && (
+                        <div className="w-full p-3 mb-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
 
@@ -52,6 +93,7 @@ const AuthScreen = ({ onLogin }) => {
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pr-12 pl-4 text-[#34A593] text-2xl font-medium placeholder-[#34A593]/20 focus:outline-none focus:border-[#34A593] focus:bg-white/10 transition-all text-left"
                                     dir="ltr"
                                     required
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
@@ -60,7 +102,6 @@ const AuthScreen = ({ onLogin }) => {
                         <div className="flex flex-col gap-2">
                             <label className="text-white/50 text-xs font-bold mr-1 tracking-wider uppercase">كلمة المرور</label>
                             <div className="relative group">
-                                {/* تم استبدال القفل هنا بالعين */}
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -76,24 +117,36 @@ const AuthScreen = ({ onLogin }) => {
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pr-12 pl-4 text-[#34A593] text-2xl font-medium placeholder-[#34A593]/20 focus:outline-none focus:border-[#34A593] focus:bg-white/10 transition-all text-left"
                                     dir="ltr"
                                     required
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
 
                         <button
                             type="submit"
-                            className="w-full bg-[#0a1f24] hover:bg-[#07151a] border border-[#34A593]/30 text-white py-4 rounded-2xl font-bold text-lg mt-4 shadow-[0_0_20px_rgba(10,31,36,0.8)] hover:shadow-[0_0_30px_rgba(52,165,147,0.4)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group"
+                            disabled={loading}
+                            className={`w-full bg-[#0a1f24] hover:bg-[#07151a] border border-[#34A593]/30 text-white py-4 rounded-2xl font-bold text-lg mt-4 shadow-[0_0_20px_rgba(10,31,36,0.8)] hover:shadow-[0_0_30px_rgba(52,165,147,0.4)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 group ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
-                            <ArrowLeft size={20} className="group-hover:-translate-x-2 transition-transform" />
+                            {loading ? (
+                                <Loader2 className="animate-spin" size={24} />
+                            ) : (
+                                <>
+                                    {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
+                                    <ArrowLeft size={20} className="group-hover:-translate-x-2 transition-transform" />
+                                </>
+                            )}
                         </button>
                     </form>
 
                     <div className="mt-8 pt-6 border-t border-white/10 w-full text-center">
                         <button
-                            onClick={() => setIsLogin(!isLogin)}
+                            onClick={() => {
+                                setIsLogin(!isLogin);
+                                setError('');
+                            }}
                             className="text-white/60 hover:text-white transition-colors text-sm"
                             type="button"
+                            disabled={loading}
                         >
                             {isLogin ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
                             <span className="text-[#34A593] font-bold">
