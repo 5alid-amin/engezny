@@ -3,7 +3,7 @@ import { Play, Pause, RotateCcw, Maximize, Settings, X } from 'lucide-react';
 import CountdownBox from './CountdownBox';
 import axiosInstance from '../api/axiosInstance'; // استيراد الاكسيوس
 
-// استيراد ملفات الأصوات من المسار اللي حددته
+// استيراد ملفات الأصوات
 import focusStartSound from '../assets/sounds/focus_start.wav';
 import focusCompleteSound from '../assets/sounds/focus_complete.wav';
 import breakCompleteSound from '../assets/sounds/break_complete.wav';
@@ -42,6 +42,13 @@ const CountdownDisplay = () => {
   const [showSettings, setShowSettings] = useState(false);
   const containerRef = useRef(null);
 
+  // مراجع ملفات الصوت لضمان التحميل المسبق والثبات
+  const audioRefs = {
+    focusStart: useRef(new Audio(focusStartSound)),
+    focusComplete: useRef(new Audio(focusCompleteSound)),
+    breakComplete: useRef(new Audio(breakCompleteSound))
+  };
+
   const userId = localStorage.getItem('userId');
 
   // حفظ الحالة في localStorage عند أي تغيير
@@ -68,10 +75,12 @@ const CountdownDisplay = () => {
     }
   };
 
-  // ميثود تشغيل الأصوات الجديدة
-  const playSound = (soundFile) => {
-    const audio = new Audio(soundFile);
-    audio.play().catch(err => console.error("خطأ في تشغيل الصوت:", err));
+  // ميثود تشغيل الصوت المحدثة
+  const playSound = (audioObj) => {
+    if (audioObj.current) {
+      audioObj.current.currentTime = 0; // إعادة الصوت للبداية لو شغال
+      audioObj.current.play().catch(err => console.error("خطأ في تشغيل الصوت:", err));
+    }
   };
 
   // المنطق الرئيسي للعداد والمزامنة
@@ -89,12 +98,12 @@ const CountdownDisplay = () => {
         }
       }, 1000);
     } else if (isActive && secondsLeft === 0) {
-      // تشغيل أصوات نهاية الجلسات
+      // تشغيل أصوات نهاية الجلسات باستخدام الـ Refs
       if (isFocusSession) {
-        playSound(focusCompleteSound); // خلصنا فوكس وداخلين بريك
+        playSound(audioRefs.focusComplete);
         recordFocusSession(focusTime);
       } else {
-        playSound(breakCompleteSound); // خلصنا البريك
+        playSound(audioRefs.breakComplete);
       }
 
       const nextSessionIsFocus = !isFocusSession;
@@ -103,7 +112,6 @@ const CountdownDisplay = () => {
       setIsFocusSession(nextSessionIsFocus);
       setSecondsLeft(nextDuration);
 
-      // تحديث وقت الانتهاء للجلسة القادمة لضمان الاستمرارية
       const newEndTime = Date.now() + nextDuration * 1000;
       localStorage.setItem('timerTargetEndTime', newEndTime);
     }
@@ -111,7 +119,7 @@ const CountdownDisplay = () => {
     return () => clearInterval(interval);
   }, [isActive, secondsLeft, isFocusSession, focusTime, breakTime]);
 
-  // مزامنة الوقت فور العودة للتاب (Visibility Change)
+  // مزامنة الوقت فور العودة للتاب
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isActive) {
@@ -137,8 +145,8 @@ const CountdownDisplay = () => {
   };
 
   const handleStartAction = () => {
-    // تشغيل صوت البداية
-    playSound(focusStartSound);
+    // تشغيل صوت البداية باستخدام الـ Ref
+    playSound(audioRefs.focusStart);
 
     handleEnterFullscreen();
     const endTime = Date.now() + secondsLeft * 1000;

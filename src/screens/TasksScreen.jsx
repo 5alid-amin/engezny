@@ -75,7 +75,7 @@ const SortableTask = ({ task, handleToggleStatus, handleOpenModal, handleDelete 
           </div>
         )}
 
-        <div className="relative inline-block group -mt-2"> {/* تم رفع التايتل هنا بـ -mt-2 */}
+        <div className="relative inline-block group -mt-2">
           <h3 className={`text-3xl mb-2 tracking-wide font-bold transition-colors duration-500 ${task.isDone ? 'text-white/40' : 'text-white'}`}>
             {task.title}
           </h3>
@@ -129,7 +129,21 @@ const TasksScreen = () => {
         axiosInstance.get(`/Tasks/${userId}`),
         axiosInstance.get(`/Categories/${userId}`)
       ]);
-      setTasks(tasksRes.data);
+      const savedOrder = localStorage.getItem(`tasksOrder_${userId}`);
+      if (savedOrder) {
+        const orderIds = JSON.parse(savedOrder);
+        const orderedTasks = [...tasksRes.data].sort((a, b) => {
+          const indexA = orderIds.indexOf(a.id);
+          const indexB = orderIds.indexOf(b.id);
+          if (indexA === -1 && indexB === -1) return 0;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+        setTasks(orderedTasks);
+      } else {
+        setTasks(tasksRes.data);
+      }
       setCategories(catsRes.data);
     } catch (error) {
       console.error("Fetch Error:", error);
@@ -144,7 +158,9 @@ const TasksScreen = () => {
       setTasks((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        localStorage.setItem(`tasksOrder_${userId}`, JSON.stringify(newItems.map(t => t.id)));
+        return newItems;
       });
     }
   };
@@ -201,7 +217,6 @@ const TasksScreen = () => {
     const payload = {
       title: formData.title,
       description: showDescriptionField ? (formData.description || "") : "",
-      // إذا كان الشيك بوكس مغلق، نرسل null، وإذا كان مفتوح نرسل الـ ID المختار
       categoryId: showProjectList ? (formData.categoryId ? parseInt(formData.categoryId) : null) : null,
       userId: parseInt(userId)
     };
@@ -219,6 +234,17 @@ const TasksScreen = () => {
     }
   };
 
+  // --- منطق عداد التاسكات الذكي ---
+  const getRemainingTasksText = () => {
+    const remainingCount = tasks.filter(t => !t.isDone).length;
+
+    if (remainingCount === 0) return "خلصنا كل اللي ورانا.. بطل! 🔥";
+    if (remainingCount === 1) return "فاضلنا تاسك واحد عااش..";
+    if (remainingCount === 2) return "فاضلنا تاسكين.. قربت";
+    if (remainingCount >= 3 && remainingCount <= 10) return `فاضلنا ${remainingCount} تاسكات..`;
+    return `فاضلنا ${remainingCount} تاسك..`;
+  };
+
   return (
     <div className="flex flex-col flex-1 h-full relative p-8">
       {loading && (
@@ -228,6 +254,16 @@ const TasksScreen = () => {
       )}
 
       <div className="max-w-4xl mx-auto w-full flex flex-col gap-8 mt-12 mb-24">
+
+        {/* العداد الذكي */}
+        {!loading && tasks.length > 0 && (
+          <div className="text-right px-4 animate-in fade-in slide-in-from-right-4 duration-700">
+            <span className="text-white/10 text-xl font-medium tracking-wide italic">
+              {getRemainingTasksText()}
+            </span>
+          </div>
+        )}
+
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             {tasks.map((task) => (
