@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
 * {
-  font-family: 'MyCustomFont', sans-serif !important;
+  font-family: 'MyCustomFont', sans-serif;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-  letter-spacing: 2px !important;
+  /* letter-spacing: 10px !important; */
+}
+
+@font-face {
+  font-family: 'MyCustomFont';
+  /* تأكد من وجود النقطة قبل assets لو index.css في نفس مستوى فولدر assets */
+  src: url('/fonts/TheYearofTheCamel-ExtraBold.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  letter-spacing: 0.02em;
 }
 
 button,
@@ -36,14 +45,6 @@ textarea {
   /* Brand teal */
 }
 
-@font-face {
-  font-family: 'MyCustomFont';
-  /* تأكد من وجود النقطة قبل assets لو index.css في نفس مستوى فولدر assets */
-  src: url('/fonts/TheYearofHandicrafts-Regular.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  letter-spacing: 0.02em;
-}
 
 @theme {
   --color-brand-teal: #34A593;
