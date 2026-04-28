@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Award, Zap, CheckCircle2, Timer as TimerIcon, ChevronDown, Star, Flame, Trophy, Rocket, Target } from 'lucide-react';
+import { Calendar, Award, Zap, CheckCircle2, Timer as TimerIcon, ChevronDown, Star, Flame, Trophy, Rocket, Target, ListChecks } from 'lucide-react';
 import { XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, YAxis } from 'recharts';
 import axiosInstance from '../api/axiosInstance';
 
@@ -57,14 +57,13 @@ const StatsScreen = () => {
     hours: item.hours
   })) || [];
 
-  // --- حساب الحد الأقصى للمحور الرأسي (Y-Axis) ديناميكياً ---
   const maxHoursInData = chartData.length > 0 ? Math.max(...chartData.map(d => d.hours)) : 0;
 
   const getYAxisDomain = (max) => {
     if (max <= 5) return 5;
     if (max <= 7) return 7;
     if (max <= 10) return 10;
-    return Math.ceil(max / 5) * 5; // يزود بمقدار 5 (15, 20, 25...)
+    return Math.ceil(max / 5) * 5;
   };
 
   const yDomainMax = getYAxisDomain(maxHoursInData);
@@ -197,7 +196,6 @@ const StatsScreen = () => {
                     </linearGradient>
                   </defs>
 
-                  {/* جعل الجريد أضيق من خلال التحكم في الخطوط الأفقية والعمودية */}
                   <CartesianGrid
                     strokeDasharray="2 2"
                     vertical={true}
@@ -213,10 +211,9 @@ const StatsScreen = () => {
                     dy={10}
                   />
 
-                  {/* تفعيل محور Y مع ترقيم خفيف وديناميكي */}
                   <YAxis
                     domain={[0, yDomainMax]}
-                    tickCount={yDomainMax + 1} // لزيادة كثافة الخطوط الأفقية (تضييق الجريد)
+                    tickCount={yDomainMax + 1}
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }}
@@ -242,12 +239,19 @@ const StatsScreen = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <SummaryCard
               icon={<CheckCircle2 size={26} />}
               label="معدل الإنجاز"
               value={`${stats?.completionRate}%`}
-              subValue="بناءً على هدف 30 مهمة/أسبوع"
+              subValue="مقارنة بالمتوسط العام"
+              isPositive={true}
+            />
+            <SummaryCard
+              icon={<ListChecks size={26} />}
+              label="التاسكات المنجزة"
+              value={stats?.totalCompletedTasks || 0}
+              subValue="إجمالي إنجاز الأسبوع"
               isPositive={true}
             />
             <SummaryCard
@@ -277,14 +281,14 @@ const DistributionRow = ({ label, percentage, color, width }) => (
 );
 
 const SummaryCard = ({ icon, label, value, subValue, isPositive }) => (
-  <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 flex items-center justify-between hover:border-[#34A593]/30 transition-all bg-clip-padding">
-    <div className="w-16 h-16 rounded-2xl bg-[#34A593]/10 border border-[#34A593]/20 flex items-center justify-center text-[#34A593]">
+  <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 flex items-center justify-between hover:border-[#34A593]/30 transition-all bg-clip-padding h-full">
+    <div className="w-16 h-16 rounded-2xl bg-[#34A593]/10 border border-[#34A593]/20 flex items-center justify-center text-[#34A593] shrink-0">
       {icon}
     </div>
     <div className="text-right">
       <p className="text-xs font-bold text-white/30 mb-2 uppercase tracking-widest">{label}</p>
-      <p className="text-4xl font-bold text-white mb-2">{value}</p>
-      <p className={`text-[10px] font-bold ${isPositive ? 'text-[#34A593]' : 'text-red-400'} flex items-center gap-1 justify-end`}>
+      <p className="text-3xl font-bold text-white mb-2">{value}</p>
+      <p className={`text-[10px] font-bold ${isPositive ? 'text-[#34A593]' : 'text-red-400'} flex items-center gap-1 justify-end whitespace-nowrap`}>
         {subValue}
       </p>
     </div>

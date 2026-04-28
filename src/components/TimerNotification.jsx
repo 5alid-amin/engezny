@@ -13,12 +13,12 @@ const TimerNotification = ({ show, type, duration, userName, onComplete }) => {
       // المدة الكلية 5 ثواني، إذن نبدأ عند 3.5 ثانية
       const fadeTimer = setTimeout(() => {
         setIsFadingOut(true);
-      }, 3500);
+      }, 5000);
 
       // إغلاق المكون نهائياً بعد 5 ثواني
       const closeTimer = setTimeout(() => {
         handleClose();
-      }, 5000);
+      }, 6500);
 
       return () => {
         clearTimeout(fadeTimer);
@@ -113,7 +113,7 @@ const TimerNotification = ({ show, type, duration, userName, onComplete }) => {
         }
 
         .animate-progress {
-          animation: progress 5s linear forwards;
+          animation: progress 6.5s linear forwards;
         }
       `}</style>
     </div>
