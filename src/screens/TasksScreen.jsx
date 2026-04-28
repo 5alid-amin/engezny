@@ -310,7 +310,7 @@ const TasksScreen = () => {
       <div className="max-w-4xl mx-auto w-full flex flex-col gap-8 mt-12 mb-24">
         <div className="text-right px-4 mb-[-15px]">
           <span className="text-brand-teal/10 text-lg font-medium tracking-wide ">
-            مافيش تاسكات هتقعد لبكرهههههههه.. اديني قولتلك🚶‍♂️
+            مافيش تاسكات هتقعد لبكره.. اديني قولتلك🚶‍♂️
           </span>
         </div>
 
