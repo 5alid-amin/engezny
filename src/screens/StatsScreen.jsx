@@ -7,7 +7,7 @@ const StatsScreen = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  const filterRef = useRef(null); // مرجع للقائمة عشان نراقب الضغط براها
+  const filterRef = useRef(null);
 
   const getCurrentWeek = () => Math.floor((new Date().getDate() - 1) / 7) + 1;
 
@@ -19,7 +19,6 @@ const StatsScreen = () => {
 
   const userId = localStorage.getItem('userId');
 
-  // إغلاق القائمة عند الضغط في أي مكان خارجي
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -57,6 +56,18 @@ const StatsScreen = () => {
     name: item.dayName,
     hours: item.hours
   })) || [];
+
+  // --- حساب الحد الأقصى للمحور الرأسي (Y-Axis) ديناميكياً ---
+  const maxHoursInData = chartData.length > 0 ? Math.max(...chartData.map(d => d.hours)) : 0;
+
+  const getYAxisDomain = (max) => {
+    if (max <= 5) return 5;
+    if (max <= 7) return 7;
+    if (max <= 10) return 10;
+    return Math.ceil(max / 5) * 5; // يزود بمقدار 5 (15, 20, 25...)
+  };
+
+  const yDomainMax = getYAxisDomain(maxHoursInData);
 
   const renderBadgeIcon = (iconName) => {
     const iconSize = 80;
@@ -178,20 +189,22 @@ const StatsScreen = () => {
 
             <div className="flex-1 w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ right: 30, left: 10, bottom: 20 }}>
+                <AreaChart data={chartData} margin={{ right: 10, left: -20, bottom: 20 }}>
                   <defs>
                     <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#34A593" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#34A593" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  {/* تعديل الجريد لمربعات خفيفة وجميلة */}
+
+                  {/* جعل الجريد أضيق من خلال التحكم في الخطوط الأفقية والعمودية */}
                   <CartesianGrid
-                    strokeDasharray="3 3"
+                    strokeDasharray="2 2"
                     vertical={true}
                     horizontal={true}
-                    stroke="rgba(255,255,255,0.05)"
+                    stroke="rgba(255,255,255,0.08)"
                   />
+
                   <XAxis
                     dataKey="name"
                     axisLine={false}
@@ -199,7 +212,17 @@ const StatsScreen = () => {
                     tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
                     dy={10}
                   />
-                  <YAxis hide domain={[0, 'dataMax + 1']} />
+
+                  {/* تفعيل محور Y مع ترقيم خفيف وديناميكي */}
+                  <YAxis
+                    domain={[0, yDomainMax]}
+                    tickCount={yDomainMax + 1} // لزيادة كثافة الخطوط الأفقية (تضييق الجريد)
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }}
+                    dx={-10}
+                  />
+
                   <Tooltip
                     contentStyle={{ backgroundColor: '#074C5B', borderRadius: '15px', border: '1px solid rgba(52,165,147,0.4)', textAlign: 'right' }}
                     itemStyle={{ color: '#34A593' }}

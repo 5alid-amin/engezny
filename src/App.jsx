@@ -6,7 +6,9 @@ import StatsScreen from './screens/StatsScreen';
 import ProjectsScreen from './screens/ProjectsScreen';
 import AccountScreen from './screens/AccountScreen';
 import AuthScreen from './screens/AuthScreen';
+import { TimerProvider } from './context/TimerContext';
 import { Settings } from 'lucide-react';
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -66,23 +68,25 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#003B46] text-white relative overflow-hidden tracking-wide text-lg" dir="rtl">
-      {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(circle,rgba(52,165,147,0.15)_0%,rgba(0,59,70,0)_70%)] z-0 pointer-events-none blur-3xl"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(52,165,147,0.1)_0%,rgba(0,59,70,0)_70%)] z-0 pointer-events-none blur-3xl"></div>
+    <TimerProvider>
+      <div className="flex min-h-screen bg-[#003B46] text-white relative overflow-hidden tracking-wide text-lg" dir="rtl">
+        {/* Background glow effects */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(circle,rgba(52,165,147,0.15)_0%,rgba(0,59,70,0)_70%)] z-0 pointer-events-none blur-3xl"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(52,165,147,0.1)_0%,rgba(0,59,70,0)_70%)] z-0 pointer-events-none blur-3xl"></div>
 
-      {/* Main Layout */}
-      <div className="relative z-10 flex w-full h-screen">
+        {/* Main Layout */}
+        <div className="relative z-10 flex w-full h-screen">
 
-        {/* Sidebar */}
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+          {/* Sidebar */}
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* Main Content Area */}
-        <main className="flex-1 flex flex-col relative p-10 h-full overflow-y-auto">
-          {renderScreen()}
-        </main>
+          {/* Main Content Area */}
+          <main className="flex-1 flex flex-col relative p-10 h-full overflow-y-auto">
+            {renderScreen()}
+          </main>
+        </div>
       </div>
-    </div>
+    </TimerProvider>
   );
 }
 

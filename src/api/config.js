@@ -1,1 +1,2 @@
-export const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "https://todonet.runasp.net/api";//"http://WeekToDo.somee.com/api"; //|| "http://localhost:5248/api";
+export const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "https://todonet.runasp.net/api";
+// export const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "https://localhost:7120/api";

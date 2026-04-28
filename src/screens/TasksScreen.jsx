@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Pencil,
   Trash2,
@@ -103,8 +103,12 @@ const TasksScreen = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
-  const [showProjectList, setShowProjectList] = useState(false);
+  const [showProjectList, setShowProjectList] = useState(true); // جعلها true دائماً
   const [showDescriptionField, setShowDescriptionField] = useState(false);
+  const [addSuccessMessage, setAddSuccessMessage] = useState(false); // رسالة التنبيه
+
+  const inputRef = useRef(null); // ريف للتركيز التلقائي
+  const categoryRefs = useRef([]); // ريف للفئات للتنقل بالأسهم
 
   const userId = localStorage.getItem('userId');
   const [formData, setFormData] = useState({ title: '', description: '', categoryId: null });
@@ -122,6 +126,13 @@ const TasksScreen = () => {
     }
   }, [userId]);
 
+  // التركيز التلقائي عند فتح المودال
+  useEffect(() => {
+    if (isModalOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isModalOpen]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -129,6 +140,14 @@ const TasksScreen = () => {
         axiosInstance.get(`/Tasks/${userId}`),
         axiosInstance.get(`/Categories/${userId}`)
       ]);
+
+      setCategories(catsRes.data);
+
+      // تحديد أول فئة كافتراضية إذا كانت موجودة ولم يتم تحديد فئة
+      if (catsRes.data.length > 0 && !formData.categoryId) {
+        setFormData(prev => ({ ...prev, categoryId: catsRes.data[0].id }));
+      }
+
       const savedOrder = localStorage.getItem(`tasksOrder_${userId}`);
       if (savedOrder) {
         const orderIds = JSON.parse(savedOrder);
@@ -144,7 +163,6 @@ const TasksScreen = () => {
       } else {
         setTasks(tasksRes.data);
       }
-      setCategories(catsRes.data);
     } catch (error) {
       console.error("Fetch Error:", error);
     } finally {
@@ -198,14 +216,18 @@ const TasksScreen = () => {
       setFormData({
         title: task.title,
         description: task.description || '',
-        categoryId: foundCat ? foundCat.id : null
+        categoryId: foundCat ? foundCat.id : (categories.length > 0 ? categories[0].id : null)
       });
-      setShowProjectList(!!foundCat);
+      setShowProjectList(true);
       setShowDescriptionField(!!task.description);
     } else {
       setIsEditing(null);
-      setFormData({ title: '', description: '', categoryId: null });
-      setShowProjectList(false);
+      setFormData({
+        title: '',
+        description: '',
+        categoryId: categories.length > 0 ? categories[0].id : null
+      });
+      setShowProjectList(true);
       setShowDescriptionField(false);
     }
     setIsModalOpen(true);
@@ -217,27 +239,59 @@ const TasksScreen = () => {
     const payload = {
       title: formData.title,
       description: showDescriptionField ? (formData.description || "") : "",
-      categoryId: showProjectList ? (formData.categoryId ? parseInt(formData.categoryId) : null) : null,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : (categories.length > 0 ? categories[0].id : null),
       userId: parseInt(userId)
     };
 
     try {
       if (isEditing) {
         await axiosInstance.put(`/Tasks/${isEditing}?userId=${userId}`, payload);
+        fetchData();
+        setIsModalOpen(false);
       } else {
         await axiosInstance.post('/Tasks', payload);
+        fetchData();
+        // إظهار رسالة نجاح وتفريغ الحقول للبقاء في المودال
+        setAddSuccessMessage(true);
+        setFormData({ ...formData, title: '', description: '' });
+        inputRef.current.focus();
+        setTimeout(() => setAddSuccessMessage(false), 2000);
       }
-      fetchData();
-      setIsModalOpen(false);
     } catch (error) {
       console.error("Save Error:", error);
     }
   };
 
-  // --- منطق عداد التاسكات الذكي ---
+  // معالجة الضغط على Enter في حقل العنوان
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const currentCatIndex = categories.findIndex(c => c.id === formData.categoryId);
+      const targetIndex = currentCatIndex !== -1 ? currentCatIndex : 0;
+      if (categoryRefs.current[targetIndex]) {
+        categoryRefs.current[targetIndex].focus();
+      }
+    }
+  };
+
+  // معالجة التنقل بالأسهم بين الفئات
+  const handleCategoryKeyDown = (e, index) => {
+    if (e.key === 'ArrowLeft') {
+      const nextIndex = (index + 1) % categories.length;
+      categoryRefs.current[nextIndex].focus();
+      setFormData({ ...formData, categoryId: categories[nextIndex].id });
+    } else if (e.key === 'ArrowRight') {
+      const prevIndex = (index - 1 + categories.length) % categories.length;
+      categoryRefs.current[prevIndex].focus();
+      setFormData({ ...formData, categoryId: categories[prevIndex].id });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
   const getRemainingTasksText = () => {
     const remainingCount = tasks.filter(t => !t.isDone).length;
-
     if (remainingCount === 0) return "خلصنا كل اللي ورانا.. بطل! 🔥";
     if (remainingCount === 1) return "فاضلنا تاسك واحد عااش..";
     if (remainingCount === 2) return "فاضلنا تاسكين.. قربت";
@@ -254,11 +308,15 @@ const TasksScreen = () => {
       )}
 
       <div className="max-w-4xl mx-auto w-full flex flex-col gap-8 mt-12 mb-24">
+        <div className="text-right px-4 mb-[-15px]">
+          <span className="text-brand-teal/10 text-lg font-medium tracking-wide ">
+            مافيش تاسكات هتقعد لبكره.. اديني قولتلك🚶‍♂️
+          </span>
+        </div>
 
-        {/* العداد الذكي */}
         {!loading && tasks.length > 0 && (
           <div className="text-right px-4 animate-in fade-in slide-in-from-right-4 duration-700">
-            <span className="text-white/10 text-xl font-medium tracking-wide italic">
+            <span className="text-white/7 text-xl font-medium tracking-wide italic">
               {getRemainingTasksText()}
             </span>
           </div>
@@ -297,6 +355,12 @@ const TasksScreen = () => {
               <X size={32} />
             </button>
 
+            {addSuccessMessage && (
+              <div className="absolute top-8 right-1/2 translate-x-1/2 bg-brand-teal text-brand-dark px-6 py-2 rounded-full font-bold animate-bounce shadow-lg">
+                تمت الإضافة بنجاح!
+              </div>
+            )}
+
             <h2 className="text-4xl text-white text-right mb-12 font-medium">
               {isEditing ? 'تعديل المهمة' : 'إضافة مهمة جديدة'}
             </h2>
@@ -305,8 +369,10 @@ const TasksScreen = () => {
               <div>
                 <label className="text-brand-gray block mb-3 text-lg">عنوان المهمة</label>
                 <input
+                  ref={inputRef}
                   type="text"
                   value={formData.title}
+                  onKeyDown={handleTitleKeyDown}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-xl text-white focus:outline-none focus:border-brand-teal/50 transition-all"
                   placeholder="ماذا ستنجز اليوم؟"
@@ -332,33 +398,27 @@ const TasksScreen = () => {
               </div>
 
               <div className="flex flex-col gap-4">
-                <label className="flex items-center justify-start gap-3 cursor-pointer group" onClick={() => setShowProjectList(!showProjectList)}>
-                  <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${showProjectList ? 'bg-brand-teal border-brand-teal' : 'border-white/20'}`}>
-                    {showProjectList && <Check size={18} className="text-brand-dark" />}
-                  </div>
-                  <span className="text-lg text-white/80 group-hover:text-brand-teal transition-colors">اختيار مشروع</span>
-                </label>
-
-                {showProjectList && (
-                  <div className="flex flex-wrap gap-3 mt-2 animate-in slide-in-from-top-2 duration-300">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setFormData({ ...formData, categoryId: cat.id })}
-                        className={`px-6 py-2 rounded-full border transition-all ${formData.categoryId === cat.id ? 'bg-brand-teal text-brand-dark border-brand-teal' : 'bg-white/5 border-white/10 text-white/60 hover:border-white/30'}`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <label className="text-lg text-white/80 mb-2">الفئة (المشروع)</label>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {categories.map((cat, index) => (
+                    <button
+                      key={cat.id}
+                      ref={el => categoryRefs.current[index] = el}
+                      onKeyDown={(e) => handleCategoryKeyDown(e, index)}
+                      onClick={() => setFormData({ ...formData, categoryId: cat.id })}
+                      className={`px-6 py-2 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-brand-teal/50 ${formData.categoryId === cat.id ? 'bg-brand-teal text-brand-dark border-brand-teal shadow-[0_0_15px_rgba(52,165,147,0.4)]' : 'bg-white/5 border-white/10 text-white/60 hover:border-white/30'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button
                 onClick={handleSave}
                 className="w-full bg-brand-teal text-brand-dark py-5 rounded-2xl text-2xl font-medium mt-6 hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
               >
-                {isEditing ? 'حفظ التعديلات' : 'إضافة الآن'}
+                {isEditing ? 'حفظ التعديلات' : 'إضافة الآن (Enter)'}
               </button>
             </div>
           </div>
