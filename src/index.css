@@ -4,6 +4,7 @@
   font-family: 'MyCustomFont', sans-serif !important;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  letter-spacing: 2px !important;
 }
 
 button,
@@ -41,6 +42,7 @@ textarea {
   src: url('/fonts/TheYearofHandicrafts-Regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+  letter-spacing: 0.02em;
 }
 
 @theme {
