@@ -52,9 +52,11 @@ const StatsScreen = () => {
     if (userId) fetchStats();
   }, [userId, filter]);
 
+  // التعديل هنا لسحب الـ fullDate من الباك اند وتنسيقه (يوم/شهر)
   const chartData = stats?.weeklyFlow?.map((item) => ({
     name: item.dayName,
-    hours: item.hours
+    hours: item.hours,
+    date: item.fullDate ? item.fullDate.split('-').slice(1).reverse().join('/') : ''
   })) || [];
 
   const maxHoursInData = chartData.length > 0 ? Math.max(...chartData.map(d => d.hours)) : 0;
@@ -207,8 +209,17 @@ const StatsScreen = () => {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
-                    dy={10}
+                    // التعديل هنا لعرض التاريخ أسفل اليوم
+                    tick={({ x, y, payload }) => (
+                      <g transform={`translate(${x},${y})`}>
+                        <text x={0} y={10} dy={16} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize={12}>
+                          {payload.value}
+                        </text>
+                        <text x={0} y={24} dy={16} textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize={9}>
+                          {chartData[payload.index]?.date}
+                        </text>
+                      </g>
+                    )}
                   />
 
                   <YAxis
