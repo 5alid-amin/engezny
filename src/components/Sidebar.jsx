@@ -8,8 +8,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 
-const Sidebar = ({ activeTab, setActiveTab }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
   const [realName, setRealName] = useState("");
 
   useEffect(() => {

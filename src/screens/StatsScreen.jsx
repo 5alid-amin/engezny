@@ -209,17 +209,42 @@ const StatsScreen = () => {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
+                    height={70}
                     // التعديل هنا لعرض التاريخ أسفل اليوم
-                    tick={({ x, y, payload }) => (
-                      <g transform={`translate(${x},${y})`}>
-                        <text x={0} y={10} dy={16} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize={12}>
-                          {payload.value}
-                        </text>
-                        <text x={0} y={24} dy={16} textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize={9}>
-                          {chartData[payload.index]?.date}
-                        </text>
-                      </g>
-                    )}
+                    tick={({ x, y, payload }) => {
+                      const hasData = chartData[payload.index]?.hours > 0;
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <text 
+                            x={0} 
+                            y={10} 
+                            dy={16} 
+                            textAnchor="middle" 
+                            fill="rgba(255,255,255,0.4)" 
+                            fontSize={12}
+                          >
+                            {payload.value}
+                          </text>
+                          <text 
+                            x={0} 
+                            y={24} 
+                            dy={16} 
+                            textAnchor="middle" 
+                            fill="rgba(255,255,255,0.15)" 
+                            fontSize={9}
+                          >
+                            {chartData[payload.index]?.date}
+                          </text>
+                          {hasData && (
+                            <g transform="translate(-6, 48)">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34A593" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_5px_rgba(52,165,147,0.5)]">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </g>
+                          )}
+                        </g>
+                      );
+                    }}
                   />
 
                   <YAxis

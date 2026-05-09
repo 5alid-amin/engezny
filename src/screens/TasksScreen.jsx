@@ -97,7 +97,7 @@ const SortableTask = ({ task, handleToggleStatus, handleOpenModal, handleDelete 
   );
 };
 
-const TasksScreen = () => {
+const TasksScreen = ({ isSidebarCollapsed }) => {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -291,12 +291,19 @@ const TasksScreen = () => {
   };
 
   const getRemainingTasksText = () => {
+    const totalCount = tasks.length;
     const remainingCount = tasks.filter(t => !t.isDone).length;
-    if (remainingCount === 0) return "خلصنا كل اللي ورانا.. بطل! 🔥";
-    if (remainingCount === 1) return "فاضلنا تاسك واحد عااش..";
-    if (remainingCount === 2) return "فاضلنا تاسكين.. قربت";
-    if (remainingCount >= 3 && remainingCount <= 10) return `فاضلنا ${remainingCount} تاسكات..`;
-    return `فاضلنا ${remainingCount} تاسك..`;
+    
+    const TotalSpan = () => <span className="text-brand-teal font-bold text-2xl mx-1 drop-shadow-[0_0_8px_rgba(52,165,147,0.4)]">{totalCount}</span>;
+    const RemainingSpan = () => <span className="text-brand-teal font-bold text-2xl mx-1 drop-shadow-[0_0_8px_rgba(52,165,147,0.4)]">{remainingCount}</span>;
+
+    const fromTotal = <> من أصل <TotalSpan /></>;
+
+    if (remainingCount === 0) return <>خلصنا كل اللي ورانا (<TotalSpan /> مهام).. بطل! 🔥</>;
+    if (remainingCount === 1) return <>فاضلنا تاسك واحد{fromTotal} عااش..</>;
+    if (remainingCount === 2) return <>فاضلنا تاسكين{fromTotal}.. قربت</>;
+    if (remainingCount >= 3 && remainingCount <= 10) return <>فاضلنا <RemainingSpan /> تاسكات{fromTotal}..</>;
+    return <>فاضلنا <RemainingSpan /> تاسك{fromTotal}</>;
   };
 
   return (
@@ -337,7 +344,7 @@ const TasksScreen = () => {
         </DndContext>
       </div>
 
-      <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none">
+      <div className={`fixed bottom-10 z-30 pointer-events-none transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) ${isSidebarCollapsed ? 'right-[150px]' : 'right-[350px]'}`}>
         <button
           onClick={() => handleOpenModal()}
           className="w-20 h-20 bg-brand-teal text-white rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(52,165,147,0.3)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(52,165,147,0.5)] hover:scale-110 pointer-events-auto"

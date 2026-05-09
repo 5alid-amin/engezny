@@ -16,6 +16,7 @@ function App() {
     return token && token !== 'undefined' && token !== 'null';
   });
   const [activeTab, setActiveTab] = useState('tasks');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // التأكد من وجود التوكن عند التحميل الأول
   useEffect(() => {
@@ -42,11 +43,11 @@ function App() {
   const renderScreen = () => {
     switch (activeTab) {
       case 'tasks':
-        return <TasksScreen />;
+        return <TasksScreen isSidebarCollapsed={isSidebarCollapsed} />;
       case 'stats':
         return <StatsScreen />;
       case 'projects':
-        return <ProjectsScreen />;
+        return <ProjectsScreen isSidebarCollapsed={isSidebarCollapsed} />;
       case 'account':
         return <AccountScreen onLogout={handleLogout} />;
       case 'timer':
@@ -78,7 +79,12 @@ function App() {
         <div className="relative z-10 flex w-full h-screen">
 
           {/* Sidebar */}
-          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+          <Sidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            isCollapsed={isSidebarCollapsed}
+            setIsCollapsed={setIsSidebarCollapsed}
+          />
 
           {/* Main Content Area */}
           <main className="flex-1 flex flex-col relative p-10 h-full overflow-y-auto">

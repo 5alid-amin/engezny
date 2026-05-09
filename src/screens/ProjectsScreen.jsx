@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Check, Plus, X, Loader2 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance'; // Interceptor بتاعنا
 
-const CategoriesScreen = () => {
+const CategoriesScreen = ({ isSidebarCollapsed }) => {
   const [categories, setCategories] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
@@ -96,7 +96,7 @@ const CategoriesScreen = () => {
 
       {/* Header Section */}
       <div className="flex flex-col items-center justify-center text-center mt-4 mb-12">
-        <h2 className="text-4xl text-white font-bold mb-3 tracking-tight">هتركز علي اي الفتره دي..</h2>
+        <h2 className="text-4xl text-white font-bold mb-3 tracking-tight">هنركز علي اي الفتره دي..</h2>
         <p className="text-brand-gray text-lg opacity-70">متسرحش اوي ..</p>
       </div>
 
@@ -149,7 +149,7 @@ const CategoriesScreen = () => {
       )}
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-10 right-0 translate-x-[-40px] z-30 pointer-events-none">
+      <div className={`fixed bottom-10 z-30 pointer-events-none transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) ${isSidebarCollapsed ? 'right-[150px]' : 'right-[350px]'}`}>
         <button
           onClick={() => handleOpenModal()}
           className="w-20 h-20 bg-brand-teal text-brand-dark rounded-full flex items-center justify-center shadow-[0_15px_40px_rgba(52,165,147,0.4)] transition-all duration-300 hover:scale-110 active:scale-95 pointer-events-auto"
