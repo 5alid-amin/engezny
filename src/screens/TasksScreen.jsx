@@ -46,52 +46,56 @@ const SortableTask = ({ task, handleToggleStatus, handleOpenModal, handleDelete 
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 flex items-center gap-8 border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.2)] transition-all duration-300
-        ${task.isDone ? 'opacity-50' : 'hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:bg-white/10 hover:-translate-y-1'}
-      `}
+      className="w-full"
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50">
-        <GripVertical size={24} />
-      </div>
-
-      <div className="flex-shrink-0 cursor-pointer" onClick={() => handleToggleStatus(task.id)}>
-        {task.isDone ? (
-          <div className="w-12 h-12 rounded-full bg-brand-teal/20 border border-brand-teal/50 flex items-center justify-center">
-            <Check size={24} className="text-brand-teal" />
-          </div>
-        ) : (
-          <div className="w-12 h-12 rounded-full border-2 border-brand-teal/40 flex items-center justify-center p-1 hover:bg-brand-teal/10 transition-all">
-            <div className="w-full h-full rounded-full border-2 border-transparent"></div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 text-right">
-        {task.categoryName && (
-          <div className="flex items-center justify-end gap-4 mb-3">
-            <span className="px-4 py-1.5 rounded-full text-xs tracking-wider bg-brand-teal/20 text-brand-teal border border-brand-teal/30">
-              {task.categoryName}
-            </span>
-          </div>
-        )}
-
-        <div className="relative inline-block group -mt-2 mb-2">
-          <h3 className={`text-3xl tracking-wide font-bold transition-colors duration-500 ${task.isDone ? 'text-white/40' : 'text-white'}`}>
-            {task.title}
-          </h3>
-          <span className={`absolute top-[34%] right-0 h-[3px] bg-brand-teal/60 transition-all duration-500 ease-in-out pointer-events-none rounded-full ${task.isDone ? 'w-full' : 'w-0'}`} />
+      <div
+        className={`group bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 flex items-center gap-8 border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.2)] transition-all duration-500 relative overflow-hidden
+          ${task.isDone ? 'opacity-50' : 'hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:bg-white/10 hover:-translate-y-2'}
+        `}
+      >
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50">
+          <GripVertical size={24} />
         </div>
 
-        {task.description && <p className="text-base text-brand-gray leading-relaxed mt-1">{task.description}</p>}
-      </div>
+        <div className="flex-shrink-0 cursor-pointer" onClick={() => handleToggleStatus(task.id)}>
+          {task.isDone ? (
+            <div className="w-12 h-12 rounded-full bg-brand-teal/20 border border-brand-teal/50 flex items-center justify-center">
+              <Check size={24} className="text-brand-teal" />
+            </div>
+          ) : (
+            <div className="w-12 h-12 rounded-full border-2 border-brand-teal/40 flex items-center justify-center p-1 hover:bg-brand-teal/10 transition-all">
+              <div className="w-full h-full rounded-full border-2 border-transparent"></div>
+            </div>
+          )}
+        </div>
 
-      <div className="flex flex-col items-center justify-center gap-5 border-r border-white/10 pr-8">
-        <button onClick={() => handleOpenModal(task)} className="text-white/40 hover:text-brand-teal transition-all hover:scale-110">
-          <Pencil size={22} />
-        </button>
-        <button onClick={() => handleDelete(task.id)} className="text-white/40 hover:text-red-400 transition-all hover:scale-110">
-          <Trash2 size={22} />
-        </button>
+        <div className="flex-1 text-right">
+          {task.categoryName && (
+            <div className="flex items-center justify-end gap-4 mb-3">
+              <span className="px-4 py-1.5 rounded-full text-xs tracking-wider bg-brand-teal/20 text-brand-teal border border-brand-teal/30">
+                {task.categoryName}
+              </span>
+            </div>
+          )}
+
+          <div className="relative inline-block group/title -mt-2 mb-2">
+            <h3 className={`text-3xl tracking-wide font-bold transition-colors duration-500 ${task.isDone ? 'text-white/40' : 'text-white'}`}>
+              {task.title}
+            </h3>
+            <span className={`absolute top-[34%] right-0 h-[3px] bg-brand-teal/60 transition-all duration-500 ease-in-out pointer-events-none rounded-full ${task.isDone ? 'w-full' : 'w-0'}`} />
+          </div>
+
+          {task.description && <p className="text-base text-brand-gray leading-relaxed mt-1">{task.description}</p>}
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-5 border-r border-white/10 pr-8">
+          <button onClick={() => handleOpenModal(task)} className="text-white/40 hover:text-brand-teal transition-all hover:scale-110">
+            <Pencil size={22} />
+          </button>
+          <button onClick={() => handleDelete(task.id)} className="text-white/40 hover:text-red-400 transition-all hover:scale-110">
+            <Trash2 size={22} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -316,7 +320,7 @@ const TasksScreen = ({ isSidebarCollapsed }) => {
 
       <div className="max-w-4xl mx-auto w-full flex flex-col gap-8 mt-12 mb-24">
         <div className="text-right px-4 mb-[-15px]">
-          <span className="text-brand-teal/10 text-lg font-medium tracking-wide ">
+          <span className="text-brand-teal/5 text-lg font-medium tracking-wide ">
             مافيش تاسكات هتقعد لبكره.. اديني قولتلك🚶‍♂️
           </span>
         </div>

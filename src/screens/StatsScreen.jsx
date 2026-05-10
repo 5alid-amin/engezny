@@ -215,22 +215,22 @@ const StatsScreen = () => {
                       const hasData = chartData[payload.index]?.hours > 0;
                       return (
                         <g transform={`translate(${x},${y})`}>
-                          <text 
-                            x={0} 
-                            y={10} 
-                            dy={16} 
-                            textAnchor="middle" 
-                            fill="rgba(255,255,255,0.4)" 
+                          <text
+                            x={0}
+                            y={10}
+                            dy={16}
+                            textAnchor="middle"
+                            fill="rgba(255,255,255,0.4)"
                             fontSize={12}
                           >
                             {payload.value}
                           </text>
-                          <text 
-                            x={0} 
-                            y={24} 
-                            dy={16} 
-                            textAnchor="middle" 
-                            fill="rgba(255,255,255,0.15)" 
+                          <text
+                            x={0}
+                            y={24}
+                            dy={16}
+                            textAnchor="middle"
+                            fill="rgba(255,255,255,0.15)"
                             fontSize={9}
                           >
                             {chartData[payload.index]?.date}
