@@ -7,7 +7,9 @@ const StatsScreen = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const filterRef = useRef(null);
+  const wheelTimeout = useRef(null);
 
   const getCurrentWeek = () => Math.floor((new Date().getDate() - 1) / 7) + 1;
 
@@ -26,7 +28,39 @@ const StatsScreen = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    const handleGlobalWheel = (e) => {
+      if (chartContainerRef.current && chartContainerRef.current.contains(e.target)) {
+        e.preventDefault();
+        if (wheelTimeout.current) return;
+        if (Math.abs(e.deltaY) < 30) return;
+
+        if (e.deltaY > 0) {
+          setCurrentSlide(prev => {
+            if (prev === 0) {
+              wheelTimeout.current = setTimeout(() => { wheelTimeout.current = null; }, 1000);
+              return 1;
+            }
+            return prev;
+          });
+        } else if (e.deltaY < 0) {
+          setCurrentSlide(prev => {
+            if (prev === 1) {
+              wheelTimeout.current = setTimeout(() => { wheelTimeout.current = null; }, 1000);
+              return 0;
+            }
+            return prev;
+          });
+        }
+      }
+    };
+
+    document.addEventListener('wheel', handleGlobalWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('wheel', handleGlobalWheel);
+    };
   }, []);
 
   useEffect(() => {
@@ -51,6 +85,18 @@ const StatsScreen = () => {
 
     if (userId) fetchStats();
   }, [userId, filter]);
+
+  useEffect(() => {
+    if (!loading && stats) {
+      const timer = setTimeout(() => {
+        setCurrentSlide(prev => {
+          if (prev === 0) return 1;
+          return prev;
+        });
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, stats]);
 
   // التعديل هنا لسحب الـ fullDate من الباك اند وتنسيقه (يوم/شهر)
   const chartData = stats?.weeklyFlow?.map((item) => ({
@@ -176,102 +222,200 @@ const StatsScreen = () => {
 
         {/* Right Column (Chart Area) */}
         <div className="flex-1 flex flex-col gap-6 ">
-          <div className="bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/10 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-[520px] bg-clip-padding">
+          <div
+            className="bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 border border-white/10 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-[520px] bg-clip-padding transition-all"
+            onWheel={(e) => {
+              if (wheelTimeout.current) return;
+              if (Math.abs(e.deltaY) < 30) return;
+
+              if (e.deltaY > 0 && currentSlide === 0) {
+                setCurrentSlide(1);
+                wheelTimeout.current = setTimeout(() => { wheelTimeout.current = null; }, 800);
+              } else if (e.deltaY < 0 && currentSlide === 1) {
+                setCurrentSlide(0);
+                wheelTimeout.current = setTimeout(() => { wheelTimeout.current = null; }, 800);
+              }
+            }}
+          >
             <div className="flex justify-between items-start mb-12 relative z-10 text-right">
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#34A593] shadow-[0_0_10px_#34A593]"></div>
-                <div className="w-3 h-3 rounded-full bg-white/10"></div>
+              <div className="flex gap-2 cursor-pointer z-20">
+                <button
+                  onClick={() => setCurrentSlide(0)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === 0 ? 'bg-[#34A593] shadow-[0_0_10px_#34A593] scale-110' : 'bg-white/20 hover:bg-white/40'}`}
+                />
+                <button
+                  onClick={() => setCurrentSlide(1)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === 1 ? 'bg-[#34A593] shadow-[0_0_10px_#34A593] scale-110' : 'bg-white/20 hover:bg-white/40'}`}
+                />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-1">تحليل التدفق الأسبوعي</h3>
-                <p className="text-sm text-white/40">قياس ساعات التركيز العميق اليومية</p>
+                <h3 className="text-2xl font-bold text-white mb-1">
+                  {currentSlide === 0 ? "تحليل التدفق الأسبوعي" : "حالة العمل اليومي"}
+                </h3>
+                <p className="text-sm text-white/40">
+                  {currentSlide === 0 ? "قياس ساعات التركيز العميق اليومية" : "متابعة أيام الإنجاز في الأسبوع"}
+                </p>
               </div>
             </div>
 
-            <div className="flex-1 w-full relative z-10">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ right: 10, left: -20, bottom: 20 }}>
-                  <defs>
-                    <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#34A593" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#34A593" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+            <div className="flex-1 w-full relative z-10 overflow-hidden min-h-[300px]">
 
-                  <CartesianGrid
-                    strokeDasharray="2 2"
-                    vertical={true}
-                    horizontal={true}
-                    stroke="rgba(255,255,255,0.08)"
-                  />
+              {/* Slide 0: Area Chart */}
+              <div
+                className={`absolute inset-0 w-full h-full flex flex-col transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${currentSlide === 0
+                  ? 'opacity-100 translate-y-0 pointer-events-auto scale-100'
+                  : 'opacity-0 -translate-y-16 pointer-events-none scale-95 blur-sm'
+                  }`}
+              >
+                <div className="flex-1 w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ right: 10, left: -20, bottom: 20 }}>
+                      <defs>
+                        <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#34A593" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#34A593" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
 
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    height={70}
-                    // التعديل هنا لعرض التاريخ أسفل اليوم
-                    tick={({ x, y, payload }) => {
-                      const hasData = chartData[payload.index]?.hours > 0;
-                      return (
-                        <g transform={`translate(${x},${y})`}>
-                          <text
-                            x={0}
-                            y={10}
-                            dy={16}
-                            textAnchor="middle"
-                            fill="rgba(255,255,255,0.4)"
-                            fontSize={12}
-                          >
-                            {payload.value}
-                          </text>
-                          <text
-                            x={0}
-                            y={24}
-                            dy={16}
-                            textAnchor="middle"
-                            fill="rgba(255,255,255,0.15)"
-                            fontSize={9}
-                          >
-                            {chartData[payload.index]?.date}
-                          </text>
-                          {hasData && (
-                            <g transform="translate(-6, 48)">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34A593" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_5px_rgba(52,165,147,0.5)]">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
+                      <CartesianGrid
+                        strokeDasharray="2 2"
+                        vertical={true}
+                        horizontal={true}
+                        stroke="rgba(255,255,255,0.08)"
+                      />
+
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        height={70}
+                        // التعديل هنا لعرض التاريخ أسفل اليوم
+                        tick={({ x, y, payload }) => {
+                          const hasData = chartData[payload.index]?.hours > 0;
+                          return (
+                            <g transform={`translate(${x},${y})`}>
+                              <text
+                                x={0}
+                                y={10}
+                                dy={16}
+                                textAnchor="middle"
+                                fill="rgba(255,255,255,0.4)"
+                                fontSize={12}
+                              >
+                                {payload.value}
+                              </text>
+                              <text
+                                x={0}
+                                y={24}
+                                dy={16}
+                                textAnchor="middle"
+                                fill="rgba(255,255,255,0.15)"
+                                fontSize={9}
+                              >
+                                {chartData[payload.index]?.date}
+                              </text>
+                              {hasData && (
+                                <g transform="translate(-6, 48)">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34A593" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_5px_rgba(52,165,147,0.5)]">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                </g>
+                              )}
                             </g>
+                          );
+                        }}
+                      />
+
+                      <YAxis
+                        domain={[0, yDomainMax]}
+                        tickCount={yDomainMax + 1}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }}
+                        dx={-10}
+                      />
+
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#074C5B', borderRadius: '15px', border: '1px solid rgba(52,165,147,0.4)', textAlign: 'right' }}
+                        itemStyle={{ color: '#34A593' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="hours"
+                        stroke="#34A593"
+                        strokeWidth={4}
+                        fillOpacity={1}
+                        fill="url(#colorHours)"
+                        dot={{ r: 6, fill: '#34A593', strokeWidth: 2, stroke: '#022c35' }}
+                        activeDot={{ r: 8, strokeWidth: 0 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Slide 1: Horizontal Chain */}
+              <div
+                className={`absolute inset-0 w-full h-full flex flex-col justify-center gap-8 md:gap-12 transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${currentSlide === 1
+                  ? 'opacity-100 translate-y-0 pointer-events-auto scale-100'
+                  : 'opacity-0 translate-y-16 pointer-events-none scale-95 blur-sm'
+                  }`}
+              >
+                {/* Day Names Row */}
+                <div className="w-full flex flex-row-reverse justify-between items-end">
+                  {chartData.map((day, idx) => (
+                    <div key={`name-${idx}`} className="flex-1 flex justify-center">
+                      <span className={`text-base sm:text-2xl lg:text-3xl font-bold transition-all duration-700 ${day.hours > 0 ? 'text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.4)] scale-110' : 'text-white/30'}`}>
+                        {day.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Nodes Row */}
+                <div className="relative w-full flex flex-row-reverse justify-between items-center py-6">
+                  {/* Background Line */}
+                  <div className="absolute left-[calc(100%/14)] right-[calc(100%/14)] h-[3px] bg-gradient-to-r from-white/5 via-white/10 to-white/5 z-0 rounded-full"></div>
+
+                  {chartData.map((day, idx) => {
+                    const isCompleted = day.hours > 0;
+                    return (
+                      <div key={`node-${idx}`} className="flex-1 flex justify-center relative z-10 group cursor-pointer">
+                        <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24">
+                          {isCompleted ? (
+                            <>
+                              <div className="absolute inset-0 bg-[#34A593] blur-[20px] opacity-40 rounded-full group-hover:opacity-70 group-hover:blur-[30px] transition-all duration-500"></div>
+                              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#022c35] border-2 border-[#34A593]/50 rounded-full flex items-center justify-center relative z-10 shadow-[0_0_20px_rgba(52,165,147,0.4),inset_0_0_15px_rgba(52,165,147,0.2)] group-hover:scale-110 group-hover:border-[#34A593] group-hover:shadow-[0_0_30px_rgba(52,165,147,0.8)] transition-all duration-500">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#34A593" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-[0_0_10px_rgba(52,165,147,0.9)] group-hover:scale-110 transition-transform duration-500">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[#022c35] border-2 border-white/10 group-hover:bg-white/5 group-hover:border-white/20 group-hover:scale-125 transition-all duration-500 shadow-[0_0_10px_rgba(0,0,0,0.5)]"></div>
                           )}
-                        </g>
-                      );
-                    }}
-                  />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                  <YAxis
-                    domain={[0, yDomainMax]}
-                    tickCount={yDomainMax + 1}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }}
-                    dx={-10}
-                  />
-
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#074C5B', borderRadius: '15px', border: '1px solid rgba(52,165,147,0.4)', textAlign: 'right' }}
-                    itemStyle={{ color: '#34A593' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="hours"
-                    stroke="#34A593"
-                    strokeWidth={4}
-                    fillOpacity={1}
-                    fill="url(#colorHours)"
-                    dot={{ r: 6, fill: '#34A593', strokeWidth: 2, stroke: '#022c35' }}
-                    activeDot={{ r: 8, strokeWidth: 0 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+                {/* Status Badges Row */}
+                <div className="w-full flex flex-row-reverse justify-between items-start">
+                  {chartData.map((day, idx) => {
+                    const isCompleted = day.hours > 0;
+                    return (
+                      <div key={`status-${idx}`} className="flex-1 flex justify-center">
+                        <div className={`transition-all duration-700 transform ${isCompleted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+                          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#34A593] uppercase px-3 py-1 sm:px-4 sm:py-2 bg-[#34A593]/10 rounded-full border border-[#34A593]/30 shadow-[0_0_15px_rgba(52,165,147,0.15)] backdrop-blur-md">
+                            مُنجز
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
