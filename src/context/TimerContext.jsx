@@ -30,6 +30,11 @@ export const TimerProvider = ({ children }) => {
     return saved ? parseInt(saved) : 4;
   });
   const [completedSessions, setCompletedSessions] = useState(() => {
+    const savedDate = localStorage.getItem('timerCurrentDate');
+    const today = new Date().toDateString();
+    if (savedDate !== today) {
+      return 0; // Reset for the new day
+    }
     const saved = localStorage.getItem('timerCompletedSessions');
     return saved ? parseInt(saved) : 0;
   });
@@ -190,6 +195,33 @@ export const TimerProvider = ({ children }) => {
 
     return () => clearInterval(interval);
   }, [isActive, secondsLeft, isFocusSession, completedSessions, focusTime, breakTime, longBreakTime, longBreakInterval]);
+
+  // التحقق من منتصف الليل وتصفير الجلسات
+  useEffect(() => {
+    const checkMidnight = () => {
+      const savedDate = localStorage.getItem('timerCurrentDate');
+      const today = new Date().toDateString();
+      if (savedDate !== today) {
+        localStorage.setItem('timerCurrentDate', today);
+        setCompletedSessions(0);
+      }
+    };
+
+    checkMidnight(); // عند التحميل الأول
+    const interval = setInterval(checkMidnight, 60000); // كل دقيقة
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkMidnight();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // تحديث الوقت عند العودة للتابة (للدقة)
   useEffect(() => {

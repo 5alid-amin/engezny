@@ -75,11 +75,11 @@ const SortableTask = ({ task, handleToggleStatus, handleOpenModal, handleDelete 
           </div>
         )}
 
-        <div className="relative inline-block group -mt-2">
-          <h3 className={`text-3xl mb-2 tracking-wide font-bold transition-colors duration-500 ${task.isDone ? 'text-white/40' : 'text-white'}`}>
+        <div className="relative inline-block group -mt-2 mb-2">
+          <h3 className={`text-3xl tracking-wide font-bold transition-colors duration-500 ${task.isDone ? 'text-white/40' : 'text-white'}`}>
             {task.title}
           </h3>
-          <span className={`absolute top-[48%] right-0 h-[3px] bg-brand-teal/60 transition-all duration-500 ease-in-out pointer-events-none rounded-full ${task.isDone ? 'w-full' : 'w-0'}`} />
+          <span className={`absolute top-[34%] right-0 h-[3px] bg-brand-teal/60 transition-all duration-500 ease-in-out pointer-events-none rounded-full ${task.isDone ? 'w-full' : 'w-0'}`} />
         </div>
 
         {task.description && <p className="text-base text-brand-gray leading-relaxed mt-1">{task.description}</p>}
@@ -293,7 +293,7 @@ const TasksScreen = ({ isSidebarCollapsed }) => {
   const getRemainingTasksText = () => {
     const totalCount = tasks.length;
     const remainingCount = tasks.filter(t => !t.isDone).length;
-    
+
     const TotalSpan = () => <span className="text-brand-teal font-bold text-2xl mx-1 drop-shadow-[0_0_8px_rgba(52,165,147,0.4)]">{totalCount}</span>;
     const RemainingSpan = () => <span className="text-brand-teal font-bold text-2xl mx-1 drop-shadow-[0_0_8px_rgba(52,165,147,0.4)]">{remainingCount}</span>;
 
